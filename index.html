@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>list</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				background: #0f0f0f;
+				font-family: "Fira Code", monospace;
+				height: 100vh;
+				overflow: hidden; /* prevent whole page scroll */
+				display: flex;
+				flex-direction: column;
+			}
+
+			/* ── Sticky input at top ── */
+			#form {
+				position: sticky;
+				top: 0;
+				background: #0f0f0f;
+				padding: 1rem 0.5rem;
+				z-index: 10;
+				display: flex;
+				justify-content: center;
+				/*border-bottom: 1px solid #313244;*/
+				flex-shrink: 0;
+			}
+
+			#input {
+				background: transparent;
+				border: none;
+				outline: none;
+				font-size: 2rem;
+				color: #cdd6f4;
+				caret-color: #89b4fa;
+				text-align: center;
+				width: 100%;
+				max-width: 600px;
+				padding: 0.5rem;
+			}
+
+			/* ── Scrollable list ── */
+			#list-container {
+				flex: 1;
+				overflow-y: auto;
+				padding: 1rem 0.5rem;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			#list {
+				list-style: none;
+				color: #a6e3a1;
+				font-size: 1.5rem;
+				text-align: center;
+				width: 100%;
+				max-width: 600px;
+			}
+
+			#list li {
+				padding: 0.3rem 0;
+			}
+
+			/* auto-scroll to top when new item is added */
+			#list-container {
+				scroll-behavior: smooth;
+			}
+		</style>
+	</head>
+	<body>
+		<form id="form">
+			<input id="input" type="text" spellcheck="false" autofocus />
+		</form>
+
+		<div id="list-container">
+			<ul id="list"></ul>
+		</div>
+
+		<div id="buttons-container">
+			<button id="ROLL_DA_THANG">spin</button>
+		</div>
+
+		<script>
+			const form = document.getElementById("form");
+			const input = document.getElementById("input");
+			const list = document.getElementById("list");
+			const container = document.getElementById("list-container");
+			const spin_btn = document.getElementById("ROLL_DA_THANG");
+
+			// ── Form submit (Enter) ──
+			// form.addEventListener('submit', (e) => {
+			//   e.preventDefault();
+			//   const text = input.value.trim();
+			//   if (text) {
+			//     const li = document.createElement('li');
+			//     li.textContent = text;
+			//     // Prepend: new item goes at the top
+			//     list.prepend(li);
+			//     input.value = '';
+			//     // Scroll to top of list container to see the new item
+			//     container.scrollTop = 0;
+			//   }
+			// });
+
+			// ── Global type‑anywhere capture ──
+			document.addEventListener("keydown", (e) => {
+				if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+					if (document.activeElement !== input) {
+						input.focus();
+						input.value += e.key;
+						input.dispatchEvent(new Event("input", { bubbles: true }));
+						e.preventDefault();
+					}
+				}
+			});
+
+			// Click anywhere → focus input
+			document.addEventListener("click", () => input.focus());
+
+			let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+			function saveTasks() {
+				localStorage.setItem("tasks", JSON.stringify(tasks));
+			}
+
+			function renderTasks() {
+				const list = document.getElementById("list");
+				list.innerHTML = tasks.map((t) => `<li>${t}</li>`).join("");
+			}
+
+			// On form submit:
+			form.addEventListener("submit", (e) => {
+				e.preventDefault();
+				const text = input.value.trim();
+				if (text) {
+					tasks.unshift(text); // add to top
+					saveTasks();
+					renderTasks();
+					input.value = "";
+				}
+			});
+
+			// Spinnger
+			spin_btn.addEventListener("click", () => {
+				if (!tasks.length) return;
+
+				const winner = tasks[Math.floor(Math.random() * tasks.length)];
+				let index = 0;
+				let speed = 50; // ms per tick
+				let ticks = 0;
+				const minTicks =
+					tasks.length * 3 + Math.floor(Math.random() * tasks.length);
+
+				function tick() {
+
+					onTick(tasks[index % tasks.length]);
+					index++;
+					ticks++;
+
+					if (ticks >= minTicks) {
+						const winnerIndex = tasks.indexOf(winner);
+
+						// force landing on winner
+						if (tasks[index % tasks.length] === winner) {
+
+
+							return;
+						}
+						speed += 40;
+					}
+
+					setTimeout(tick, speed);
+				}
+
+				tick();
+			});
+
+			// On page load:
+			renderTasks();
+		</script>
+	</body>
+</html>
