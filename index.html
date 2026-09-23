@@ -68,8 +68,12 @@
 			#list li {
 				padding: 0.3rem 0;
 			}
+			#list li.highlight {
+				color: #FFFAFA;
+				/*background: #313244;*/
+				border-radius: 0.4rem;
+			}
 
-			/* auto-scroll to top when new item is added */
 			#list-container {
 				scroll-behavior: smooth;
 			}
@@ -94,21 +98,6 @@
 			const list = document.getElementById("list");
 			const container = document.getElementById("list-container");
 			const spin_btn = document.getElementById("ROLL_DA_THANG");
-
-			// ── Form submit (Enter) ──
-			// form.addEventListener('submit', (e) => {
-			//   e.preventDefault();
-			//   const text = input.value.trim();
-			//   if (text) {
-			//     const li = document.createElement('li');
-			//     li.textContent = text;
-			//     // Prepend: new item goes at the top
-			//     list.prepend(li);
-			//     input.value = '';
-			//     // Scroll to top of list container to see the new item
-			//     container.scrollTop = 0;
-			//   }
-			// });
 
 			// ── Global type‑anywhere capture ──
 			document.addEventListener("keydown", (e) => {
@@ -161,7 +150,12 @@
 
 				function tick() {
 
-					onTick(tasks[index % tasks.length]);
+					// remove old highlight
+					list.querySelector('.highlight')?.classList.remove('highlight');
+
+					// add highlight to current item
+					list.children[index % tasks.length].classList.add('highlight');
+
 					index++;
 					ticks++;
 
@@ -170,8 +164,6 @@
 
 						// force landing on winner
 						if (tasks[index % tasks.length] === winner) {
-
-
 							return;
 						}
 						speed += 40;
