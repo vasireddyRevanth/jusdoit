@@ -69,7 +69,7 @@
 				padding: 0.3rem 0;
 			}
 			#list li.highlight {
-				color: #FFFAFA;
+				color: #fffafa;
 				/*background: #313244;*/
 				border-radius: 0.4rem;
 			}
@@ -77,9 +77,39 @@
 			#list-container {
 				scroll-behavior: smooth;
 			}
+
+			#winner-screen {
+				position: fixed;
+				inset: 0;
+				background: #000;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: #a6e3a1;
+				font-size: 3rem;
+				text-align: center;
+				padding: 2rem;
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.6s ease;
+				z-index: 100;
+			}
+			#winner-screen.show {
+				opacity: 1;
+				pointer-events: auto;
+			}
+
+			#buttons-container {
+				display: flex;
+				justify-content: center;
+				padding: 1rem 0.5rem;
+				flex-shrink: 0;
+			}
 		</style>
 	</head>
 	<body>
+		<div id="winner-screen"></div>
+
 		<form id="form">
 			<input id="input" type="text" spellcheck="false" autofocus />
 		</form>
@@ -96,8 +126,8 @@
 			const form = document.getElementById("form");
 			const input = document.getElementById("input");
 			const list = document.getElementById("list");
-			const container = document.getElementById("list-container");
 			const spin_btn = document.getElementById("ROLL_DA_THANG");
+			const winnerScreen = document.getElementById("winner-screen");
 
 			// ── Global type‑anywhere capture ──
 			document.addEventListener("keydown", (e) => {
@@ -114,15 +144,25 @@
 			// Click anywhere → focus input
 			document.addEventListener("click", () => input.focus());
 
-			let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+			let tasks = [];
+			try {
+				tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+				if (!Array.isArray(tasks)) tasks = [];
+			} catch {
+				tasks = [];
+			}
 
 			function saveTasks() {
 				localStorage.setItem("tasks", JSON.stringify(tasks));
 			}
 
 			function renderTasks() {
-				const list = document.getElementById("list");
-				list.innerHTML = tasks.map((t) => `<li>${t}</li>`).join("");
+				list.innerHTML = "";
+				for (const t of tasks) {
+					const li = document.createElement("li");
+					li.textContent = t;
+					list.appendChild(li);
+				}
 			}
 
 			// On form submit:
@@ -137,11 +177,23 @@
 				}
 			});
 
+			function showWinner(task, onDismiss) {
+				winnerScreen.textContent = task;
+				winnerScreen.classList.add("show");
+
+				// click to dismiss
+				winnerScreen.addEventListener("click", function hide() {
+					winnerScreen.classList.remove("show");
+					winnerScreen.removeEventListener("click", hide);
+					onDismiss?.();
+				});
+			}
+
 			// Spinnger
 			spin_btn.addEventListener("click", () => {
 				if (!tasks.length) return;
 
-				const winner = tasks[Math.floor(Math.random() * tasks.length)];
+				const winnerIndex = Math.floor(Math.random() * tasks.length);
 				let index = 0;
 				let speed = 50; // ms per tick
 				let ticks = 0;
@@ -149,27 +201,27 @@
 					tasks.length * 3 + Math.floor(Math.random() * tasks.length);
 
 				function tick() {
-
 					// remove old highlight
-					list.querySelector('.highlight')?.classList.remove('highlight');
-
+					list.querySelector(".highlight")?.classList.remove("highlight");
 					// add highlight to current item
-					list.children[index % tasks.length].classList.add('highlight');
-
-					index++;
-					ticks++;
+					list.children[index % tasks.length].classList.add("highlight");
 
 					if (ticks >= minTicks) {
-						const winnerIndex = tasks.indexOf(winner);
-
-						// force landing on winner
-						if (tasks[index % tasks.length] === winner) {
+						// force landing on winner (by index, so duplicates are safe)
+						if (index % tasks.length === winnerIndex) {
+							const winner = tasks[winnerIndex];
+							tasks.splice(winnerIndex, 1);
+							saveTasks();
+							showWinner(winner, renderTasks);
 							return;
 						}
 						speed += 40;
 					}
 
 					setTimeout(tick, speed);
+
+					index++;
+					ticks++;
 				}
 
 				tick();
