@@ -2,7 +2,8 @@
 <html lang="en">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="theme-color" content="#0f0f0f" />
 		<title>list</title>
 		<style>
 			* {
@@ -14,10 +15,13 @@
 			body {
 				background: #0f0f0f;
 				font-family: "Fira Code", monospace;
-				height: 100vh;
+				min-height: 100dvh;
 				overflow: hidden; /* prevent whole page scroll */
 				display: flex;
 				flex-direction: column;
+				padding-top: env(safe-area-inset-top);
+				padding-bottom: env(safe-area-inset-bottom);
+				overscroll-behavior: none;
 			}
 
 			/* ── Sticky input at top ── */
@@ -37,7 +41,7 @@
 				background: transparent;
 				border: none;
 				outline: none;
-				font-size: 2rem;
+				font-size: 1.5rem;
 				color: #cdd6f4;
 				caret-color: #89b4fa;
 				text-align: center;
@@ -45,7 +49,6 @@
 				max-width: 600px;
 				padding: 0.5rem;
 			}
-
 			/* ── Scrollable list ── */
 			#list-container {
 				flex: 1;
@@ -59,7 +62,7 @@
 			#list {
 				list-style: none;
 				color: #a6e3a1;
-				font-size: 1.5rem;
+				font-size: 1.1rem;
 				text-align: center;
 				width: 100%;
 				max-width: 600px;
@@ -75,7 +78,15 @@
 			}
 
 			#list-container {
+				overflow-y: auto;
+				-webkit-overflow-scrolling: touch;
 				scroll-behavior: smooth;
+			}
+
+			/* Desktop: larger type */
+			@media (min-width: 641px) {
+				#input { font-size: 2rem; }
+				#list { font-size: 1.5rem; }
 			}
 
 			#winner-screen {
@@ -102,16 +113,28 @@
 			#buttons-container {
 				display: flex;
 				justify-content: center;
-				padding: 1rem 0.5rem;
+				padding: 1rem 0.5rem calc(1rem + env(safe-area-inset-bottom));
 				flex-shrink: 0;
 			}
+			#ROLL_DA_THANG {
+				min-height: 44px;
+				min-width: 44px;
+				padding: 0.5rem 1.5rem;
+				font: inherit;
+				border: 1px solid #a6e3a1;
+				background: transparent;
+				color: #a6e3a1;
+				border-radius: 0.4rem;
+				cursor: pointer;
+			}
+			#ROLL_DA_THANG:hover { background: #a6e3a1; color: #0f0f0f; }
 		</style>
 	</head>
 	<body>
 		<div id="winner-screen"></div>
 
 		<form id="form">
-			<input id="input" type="text" spellcheck="false" autofocus />
+			<input id="input" type="text" spellcheck="false" autocomplete="off" />
 		</form>
 
 		<div id="list-container">
@@ -129,6 +152,10 @@
 			const spin_btn = document.getElementById("ROLL_DA_THANG");
 			const winnerScreen = document.getElementById("winner-screen");
 
+			// Touch devices: skip autofocus so the keyboard doesn't pop up on load
+			const isTouch = matchMedia("(hover: none) and (pointer: coarse)").matches;
+			if (!isTouch) input.focus();
+
 			// ── Global type‑anywhere capture ──
 			document.addEventListener("keydown", (e) => {
 				if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
@@ -141,8 +168,10 @@
 				}
 			});
 
-			// Click anywhere → focus input
-			document.addEventListener("click", () => input.focus());
+			// Click anywhere → focus input (desktop only; on touch it would pop the keyboard)
+			if (!isTouch) {
+				document.addEventListener("click", () => input.focus());
+			}
 
 			let tasks = [];
 			try {
@@ -207,7 +236,7 @@
 					list.children[index % tasks.length].classList.add("highlight");
 
 					if (ticks >= minTicks) {
-						// force landing on winner (by index, so duplicates are safe)
+						// force landing on winner
 						if (index % tasks.length === winnerIndex) {
 							const winner = tasks[winnerIndex];
 							tasks.splice(winnerIndex, 1);
