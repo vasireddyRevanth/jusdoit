@@ -12,6 +12,10 @@
 				box-sizing: border-box;
 			}
 
+			[hidden] {
+				display: none !important;
+			}
+
 			body {
 				background: #0f0f0f;
 				font-family: "Fira Code", monospace;
@@ -24,16 +28,133 @@
 				overscroll-behavior: none;
 			}
 
+			/* ── Boot ── */
+			#boot {
+				flex: 1;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: #6c7086;
+				font-size: 1rem;
+			}
+
+			/* ── Auth ── */
+			#auth-screen {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				gap: 1.25rem;
+				padding: 2rem 1rem;
+				width: 100%;
+				max-width: 360px;
+				margin: 0 auto;
+			}
+
+			#auth-screen h1 {
+				font-size: 2rem;
+				font-weight: 500;
+				color: #a6e3a1;
+				letter-spacing: 0.04em;
+			}
+
+			#auth-form {
+				display: flex;
+				flex-direction: column;
+				gap: 0.75rem;
+				width: 100%;
+			}
+
+			#auth-form input {
+				background: #161616;
+				border: 1px solid #2a2a2a;
+				border-radius: 0.4rem;
+				color: #cdd6f4;
+				font: inherit;
+				font-size: 1rem;
+				padding: 0.75rem;
+				outline: none;
+			}
+
+			#auth-form input:focus {
+				border-color: #89b4fa;
+			}
+
+			#auth-form button {
+				min-height: 44px;
+				background: #a6e3a1;
+				border: none;
+				border-radius: 0.4rem;
+				color: #0f0f0f;
+				font: inherit;
+				font-size: 1rem;
+				font-weight: 600;
+				cursor: pointer;
+			}
+
+			#auth-form button:disabled {
+				opacity: 0.5;
+				cursor: wait;
+			}
+
+			#auth-error {
+				color: #f38ba8;
+				font-size: 0.9rem;
+				min-height: 1.2em;
+				text-align: center;
+			}
+
+			#auth-toggle {
+				background: none;
+				border: none;
+				color: #89b4fa;
+				font: inherit;
+				font-size: 0.9rem;
+				cursor: pointer;
+			}
+
+			/* ── App ── */
+			#app {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				min-height: 0;
+			}
+
+			#topbar {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0.5rem 0.75rem;
+				flex-shrink: 0;
+				font-size: 0.8rem;
+			}
+
+			#whoami {
+				color: #a6e3a1;
+			}
+
+			#logout {
+				background: none;
+				border: 1px solid #2a2a2a;
+				border-radius: 0.3rem;
+				color: #6c7086;
+				font: inherit;
+				font-size: 0.75rem;
+				padding: 0.35rem 0.6rem;
+				cursor: pointer;
+			}
+
 			/* ── Sticky input at top ── */
 			#form {
 				position: sticky;
 				top: 0;
 				background: #0f0f0f;
-				padding: 1rem 0.5rem;
+				padding: 0.5rem 0.5rem 1rem;
 				z-index: 10;
 				display: flex;
 				justify-content: center;
-				/*border-bottom: 1px solid #313244;*/
 				flex-shrink: 0;
 			}
 
@@ -49,6 +170,7 @@
 				max-width: 600px;
 				padding: 0.5rem;
 			}
+
 			/* ── Scrollable list ── */
 			#list-container {
 				flex: 1;
@@ -57,6 +179,9 @@
 				display: flex;
 				flex-direction: column;
 				align-items: center;
+				-webkit-overflow-scrolling: touch;
+				scroll-behavior: smooth;
+				min-height: 0;
 			}
 
 			#list {
@@ -71,22 +196,20 @@
 			#list li {
 				padding: 0.3rem 0;
 			}
+
 			#list li.highlight {
 				color: #fffafa;
-				/*background: #313244;*/
 				border-radius: 0.4rem;
-			}
-
-			#list-container {
-				overflow-y: auto;
-				-webkit-overflow-scrolling: touch;
-				scroll-behavior: smooth;
 			}
 
 			/* Desktop: larger type */
 			@media (min-width: 641px) {
-				#input { font-size: 2rem; }
-				#list { font-size: 1.5rem; }
+				#input {
+					font-size: 2rem;
+				}
+				#list {
+					font-size: 1.5rem;
+				}
 			}
 
 			#winner-screen {
@@ -105,6 +228,7 @@
 				transition: opacity 0.6s ease;
 				z-index: 100;
 			}
+
 			#winner-screen.show {
 				opacity: 1;
 				pointer-events: auto;
@@ -116,6 +240,7 @@
 				padding: 1rem 0.5rem calc(1rem + env(safe-area-inset-bottom));
 				flex-shrink: 0;
 			}
+
 			#ROLL_DA_THANG {
 				min-height: 44px;
 				min-width: 44px;
@@ -127,37 +252,168 @@
 				border-radius: 0.4rem;
 				cursor: pointer;
 			}
-			#ROLL_DA_THANG:hover { background: #a6e3a1; color: #0f0f0f; }
+
+			#ROLL_DA_THANG:hover {
+				background: #a6e3a1;
+				color: #0f0f0f;
+			}
 		</style>
 	</head>
 	<body>
 		<div id="winner-screen"></div>
 
-		<form id="form">
-			<input id="input" type="text" spellcheck="false" autocomplete="off" />
-		</form>
+		<div id="boot">loading…</div>
 
-		<div id="list-container">
-			<ul id="list"></ul>
-		</div>
+		<section id="auth-screen" hidden>
+			<h1>jusdoit</h1>
+			<form id="auth-form">
+				<input
+					id="auth-username"
+					type="text"
+					name="username"
+					placeholder="username"
+					autocomplete="username"
+					autocapitalize="none"
+					spellcheck="false"
+					required
+				/>
+				<input
+					id="auth-password"
+					type="password"
+					name="password"
+					placeholder="password"
+					autocomplete="current-password"
+					required
+				/>
+				<button id="auth-submit" type="submit">log in</button>
+			</form>
+			<p id="auth-error" role="alert"></p>
+			<button id="auth-toggle" type="button">no account? sign up</button>
+		</section>
 
-		<div id="buttons-container">
-			<button id="ROLL_DA_THANG">spin</button>
+		<div id="app" hidden>
+			<header id="topbar">
+				<span id="whoami"></span>
+				<button id="logout" type="button">log out</button>
+			</header>
+
+			<form id="form">
+				<input id="input" type="text" spellcheck="false" autocomplete="off" />
+			</form>
+
+			<div id="list-container">
+				<ul id="list"></ul>
+			</div>
+
+			<div id="buttons-container">
+				<button id="ROLL_DA_THANG">spin</button>
+			</div>
 		</div>
 
 		<script>
+			const boot = document.getElementById("boot");
+			const authScreen = document.getElementById("auth-screen");
+			const app = document.getElementById("app");
+			const authForm = document.getElementById("auth-form");
+			const authUsername = document.getElementById("auth-username");
+			const authPassword = document.getElementById("auth-password");
+			const authSubmit = document.getElementById("auth-submit");
+			const authToggle = document.getElementById("auth-toggle");
+			const authError = document.getElementById("auth-error");
+			const whoami = document.getElementById("whoami");
+			const logoutBtn = document.getElementById("logout");
+
 			const form = document.getElementById("form");
 			const input = document.getElementById("input");
 			const list = document.getElementById("list");
 			const spin_btn = document.getElementById("ROLL_DA_THANG");
 			const winnerScreen = document.getElementById("winner-screen");
 
-			// Touch devices: skip autofocus so the keyboard doesn't pop up on load
 			const isTouch = matchMedia("(hover: none) and (pointer: coarse)").matches;
-			if (!isTouch) input.focus();
+			let authMode = "login";
 
-			// ── Global type‑anywhere capture ──
+			// ── API helper ──
+			async function api(path, options = {}) {
+				const res = await fetch(path, {
+					headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+					...options,
+				});
+				let data = null;
+				if (res.status !== 204) {
+					data = await res.json().catch(() => null);
+				}
+				if (!res.ok) {
+					throw new Error((data && data.error) || `request failed (${res.status})`);
+				}
+				return data;
+			}
+
+			// ── Screens ──
+			function showAuth() {
+				boot.hidden = true;
+				app.hidden = true;
+				authScreen.hidden = false;
+				authError.textContent = "";
+				authPassword.value = "";
+				if (!isTouch) authUsername.focus();
+			}
+
+			function showApp(user) {
+				boot.hidden = true;
+				authScreen.hidden = true;
+				app.hidden = false;
+				whoami.textContent = "@" + user.username;
+				renderTasks();
+			}
+
+			// ── Auth ──
+			authToggle.addEventListener("click", () => {
+				authMode = authMode === "login" ? "register" : "login";
+				authSubmit.textContent = authMode === "login" ? "log in" : "sign up";
+				authToggle.textContent =
+					authMode === "login" ? "no account? sign up" : "have an account? log in";
+				authPassword.autocomplete =
+					authMode === "login" ? "current-password" : "new-password";
+				authError.textContent = "";
+			});
+
+			authForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				authError.textContent = "";
+
+				const username = authUsername.value.trim();
+				const password = authPassword.value;
+				if (!username || !password) {
+					authError.textContent = "enter a username and password";
+					return;
+				}
+
+				authSubmit.disabled = true;
+				try {
+					const data = await api(`/api/auth/${authMode}`, {
+						method: "POST",
+						body: JSON.stringify({ username, password }),
+					});
+					showApp(data.user);
+				} catch (err) {
+					authError.textContent = err.message;
+				} finally {
+					authSubmit.disabled = false;
+				}
+			});
+
+			logoutBtn.addEventListener("click", async () => {
+				try {
+					await api("/api/auth/logout", { method: "POST" });
+				} catch {
+					/* ignore */
+				}
+				showAuth();
+			});
+
+			// ── Type-anywhere capture (app only) ──
 			document.addEventListener("keydown", (e) => {
+				if (app.hidden) return;
 				if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
 					if (document.activeElement !== input) {
 						input.focus();
@@ -170,9 +426,12 @@
 
 			// Click anywhere → focus input (desktop only; on touch it would pop the keyboard)
 			if (!isTouch) {
-				document.addEventListener("click", () => input.focus());
+				document.addEventListener("click", () => {
+					if (!app.hidden) input.focus();
+				});
 			}
 
+			// ── Tasks (localStorage until boards land) ──
 			let tasks = [];
 			try {
 				tasks = JSON.parse(localStorage.getItem("tasks")) || [];
@@ -194,12 +453,11 @@
 				}
 			}
 
-			// On form submit:
 			form.addEventListener("submit", (e) => {
 				e.preventDefault();
 				const text = input.value.trim();
 				if (text) {
-					tasks.unshift(text); // add to top
+					tasks.unshift(text);
 					saveTasks();
 					renderTasks();
 					input.value = "";
@@ -210,7 +468,6 @@
 				winnerScreen.textContent = task;
 				winnerScreen.classList.add("show");
 
-				// click to dismiss
 				winnerScreen.addEventListener("click", function hide() {
 					winnerScreen.classList.remove("show");
 					winnerScreen.removeEventListener("click", hide);
@@ -218,25 +475,21 @@
 				});
 			}
 
-			// Spinnger
 			spin_btn.addEventListener("click", () => {
 				if (!tasks.length) return;
 
 				const winnerIndex = Math.floor(Math.random() * tasks.length);
 				let index = 0;
-				let speed = 50; // ms per tick
+				let speed = 50;
 				let ticks = 0;
 				const minTicks =
 					tasks.length * 3 + Math.floor(Math.random() * tasks.length);
 
 				function tick() {
-					// remove old highlight
 					list.querySelector(".highlight")?.classList.remove("highlight");
-					// add highlight to current item
 					list.children[index % tasks.length].classList.add("highlight");
 
 					if (ticks >= minTicks) {
-						// force landing on winner
 						if (index % tasks.length === winnerIndex) {
 							const winner = tasks[winnerIndex];
 							tasks.splice(winnerIndex, 1);
@@ -248,7 +501,6 @@
 					}
 
 					setTimeout(tick, speed);
-
 					index++;
 					ticks++;
 				}
@@ -256,8 +508,15 @@
 				tick();
 			});
 
-			// On page load:
-			renderTasks();
+			// ── Session bootstrap ──
+			(async () => {
+				try {
+					const data = await api("/api/auth/me");
+					showApp(data.user);
+				} catch {
+					showAuth();
+				}
+			})();
 		</script>
 	</body>
 </html>

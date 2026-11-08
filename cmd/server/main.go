@@ -32,9 +32,27 @@ func main() {
 	}
 	defer st.Close()
 
+	// Prune expired sessions hourly.
+	go func() {
+		ticker := time.NewTicker(time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			n, err := st.DeleteExpiredSessions(ctx)
+			cancel()
+			if err != nil {
+				slog.Error("prune sessions", "err", err)
+			} else if n > 0 {
+				slog.Info("pruned sessions", "count", n)
+			}
+		}
+	}()
+
+	secureCookies := env("JUSDOIT_SECURE_COOKIES", "") == "1"
+
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           (&httpapi.Server{Store: st, Version: version}).Handler(),
+		Handler:           httpapi.New(st, version, secureCookies).Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      30 * time.Second,

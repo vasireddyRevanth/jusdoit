@@ -27,5 +27,11 @@ ssh -i "$KEY" "$HOST" \
   "sudo install -m 0755 /tmp/jusdoit.new /usr/local/bin/jusdoit && rm -f /tmp/jusdoit.new && sudo systemctl restart jusdoit"
 
 echo "==> Verifying"
+for _ in $(seq 1 30); do
+  if curl -fsS "$BASE/api/health" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.5
+done
 curl -fsS "$BASE/api/health"; echo
 curl -fsS -o /dev/null -w "==> site HTTP %{http_code}\n" "$BASE/"

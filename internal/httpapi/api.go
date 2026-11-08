@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -13,24 +14,43 @@ import (
 
 // Server holds dependencies shared by all handlers.
 type Server struct {
-	Store   *store.Store
-	Version string
+	Store         *store.Store
+	Version       string
+	SecureCookies bool
+
+	loginLimiter    *rateLimiter
+	registerLimiter *rateLimiter
+}
+
+// New builds a Server with rate limiters configured.
+func New(st *store.Store, version string, secureCookies bool) *Server {
+	return &Server{
+		Store:           st,
+		Version:         version,
+		SecureCookies:   secureCookies,
+		loginLimiter:    newRateLimiter(10, time.Minute),
+		registerLimiter: newRateLimiter(5, time.Hour),
+	}
 }
 
 // Handler builds the HTTP router with middleware applied.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/health", s.handleHealth)
 	mux.HandleFunc("GET /api", s.handleIndex)
+	mux.HandleFunc("GET /api/health", s.handleHealth)
 
-	return recoverer(logger(mux))
+	mux.HandleFunc("POST /api/auth/register", s.handleRegister)
+	mux.HandleFunc("POST /api/auth/login", s.handleLogin)
+	mux.HandleFunc("POST /api/auth/logout", s.handleLogout)
+	mux.HandleFunc("GET /api/auth/me", s.requireAuth(s.handleMe))
+
+	return recoverer(logger(csrf(mux)))
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"name":    "jusdoit",
 		"version": s.Version,
-		"docs":    "/api/health",
 	})
 }
 
@@ -38,13 +58,9 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 	defer cancel()
 
-	dbStatus := "ok"
-	overall := "ok"
-	status := http.StatusOK
+	overall, dbStatus, status := "ok", "ok", http.StatusOK
 	if err := s.Store.Healthy(ctx); err != nil {
-		dbStatus = "error"
-		overall = "degraded"
-		status = http.StatusServiceUnavailable
+		overall, dbStatus, status = "degraded", "error", http.StatusServiceUnavailable
 		slog.Error("health check failed", "err", err)
 	}
 
@@ -56,11 +72,31 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// writeJSON encodes body and sets a no-store cache header.
 func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(body)
+}
+
+// writeError returns a JSON error envelope.
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
+}
+
+// decodeJSON reads a bounded JSON body into dst.
+func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(dst); err != nil {
+		return err
+	}
+	if dec.More() {
+		return errors.New("unexpected trailing data")
+	}
+	return nil
 }
 
 func logger(next http.Handler) http.Handler {
@@ -73,7 +109,7 @@ func logger(next http.Handler) http.Handler {
 			"path", r.URL.Path,
 			"status", sw.status,
 			"duration", time.Since(start).String(),
-			"remote", r.RemoteAddr,
+			"remote", clientIP(r),
 		)
 	})
 }
@@ -83,7 +119,7 @@ func recoverer(next http.Handler) http.Handler {
 		defer func() {
 			if rec := recover(); rec != nil {
 				slog.Error("panic", "err", rec, "stack", string(debug.Stack()))
-				http.Error(w, `{"error":"internal error"}`, http.StatusInternalServerError)
+				writeError(w, http.StatusInternalServerError, "internal error")
 			}
 		}()
 		next.ServeHTTP(w, r)
