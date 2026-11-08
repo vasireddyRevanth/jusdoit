@@ -1,0 +1,8 @@
+# build artifacts
+/jusdoit
+/dist/
+
+# local databases
+*.db
+*.db-shm
+*.db-wal

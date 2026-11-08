@@ -1,26 +1,31 @@
 #!/usr/bin/env bash
-# Deploy jusdoit to the Oracle server.
+# Build and deploy jusdoit (API + static site) to the Oracle server.
 # Usage: ./deploy.sh
 set -euo pipefail
 
-HOST="ubuntu@140.245.245.50"
-KEY="$HOME/Downloads/keys/ssh-key-2025-12-01.key"
-DEST="/var/www/jusdoit/index.html"
-REMOTE="http://140.245.245.50/"
+HOST="${HOST:-ubuntu@140.245.245.50}"
+KEY="${KEY:-$HOME/Downloads/keys/ssh-key-2025-12-01.key}"
+BASE="${BASE:-http://140.245.245.50}"
 
 cd "$(dirname "$0")"
 
-echo "==> Uploading index.html"
-scp -q -i "$KEY" -o StrictHostKeyChecking=accept-new index.html "$HOST:$DEST"
+VERSION="$(git rev-parse --short HEAD 2>/dev/null || echo dev)"
+mkdir -p dist
+
+echo "==> Building ($VERSION)"
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+  go build -trimpath -ldflags "-s -w -X main.version=$VERSION" -o dist/jusdoit ./cmd/server
+
+echo "==> Uploading binary"
+scp -q -i "$KEY" -o StrictHostKeyChecking=accept-new dist/jusdoit "$HOST:/tmp/jusdoit.new"
+
+echo "==> Uploading static site"
+scp -q -i "$KEY" index.html "$HOST:/var/www/jusdoit/index.html"
+
+echo "==> Installing and restarting"
+ssh -i "$KEY" "$HOST" \
+  "sudo install -m 0755 /tmp/jusdoit.new /usr/local/bin/jusdoit && rm -f /tmp/jusdoit.new && sudo systemctl restart jusdoit"
 
 echo "==> Verifying"
-LOCAL_MD5=$(md5sum index.html | cut -d' ' -f1)
-REMOTE_MD5=$(ssh -i "$KEY" "$HOST" "md5sum $DEST" | cut -d' ' -f1)
-
-if [ "$LOCAL_MD5" != "$REMOTE_MD5" ]; then
-  echo "!! Checksum mismatch: local=$LOCAL_MD5 remote=$REMOTE_MD5"
-  exit 1
-fi
-
-echo "==> Checksum OK: $LOCAL_MD5"
-curl -fsS -o /dev/null -w "==> Live: HTTP %{http_code} (%{size_download} bytes)\n" "$REMOTE"
+curl -fsS "$BASE/api/health"; echo
+curl -fsS -o /dev/null -w "==> site HTTP %{http_code}\n" "$BASE/"

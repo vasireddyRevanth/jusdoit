@@ -1,0 +1,22 @@
+[Unit]
+Description=jusdoit web app
+After=network.target
+
+[Service]
+Type=simple
+User=jusdoit
+Group=jusdoit
+Environment=JUSDOIT_ADDR=127.0.0.1:8000
+Environment=JUSDOIT_DB=/var/lib/jusdoit/app.db
+ExecStart=/usr/local/bin/jusdoit
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/jusdoit
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target
