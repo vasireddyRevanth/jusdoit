@@ -54,6 +54,18 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/boards/{id}/tasks/{taskId}/restore", s.requireBoard(store.RoleEditor, s.handleRestoreTask))
 	mux.HandleFunc("POST /api/boards/{id}/spin", s.requireBoard(store.RoleEditor, s.handleSpin))
 
+	mux.HandleFunc("GET /api/boards/{id}/members", s.requireBoard(store.RoleViewer, s.handleListMembers))
+	mux.HandleFunc("POST /api/boards/{id}/members", s.requireBoard(store.RoleOwner, s.handleAddMember))
+	mux.HandleFunc("PATCH /api/boards/{id}/members/{userId}", s.requireBoard(store.RoleOwner, s.handleSetMemberRole))
+	mux.HandleFunc("DELETE /api/boards/{id}/members/{userId}", s.requireBoard(store.RoleOwner, s.handleRemoveMember))
+
+	mux.HandleFunc("GET /api/boards/{id}/invites", s.requireBoard(store.RoleOwner, s.handleListInvites))
+	mux.HandleFunc("POST /api/boards/{id}/invites", s.requireBoard(store.RoleOwner, s.handleCreateInvite))
+	mux.HandleFunc("DELETE /api/boards/{id}/invites/{inviteId}", s.requireBoard(store.RoleOwner, s.handleDeleteInvite))
+
+	mux.HandleFunc("GET /api/invites/{token}", s.requireAuth(s.handleInvitePreview))
+	mux.HandleFunc("POST /api/invites/{token}/accept", s.requireAuth(s.handleAcceptInvite))
+
 	return recoverer(logger(csrf(mux)))
 }
 

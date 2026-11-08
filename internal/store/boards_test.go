@@ -82,7 +82,7 @@ func TestTaskLifecycle(t *testing.T) {
 		t.Fatalf("after spin active=%d done=%d, want 1/1", len(active), len(done))
 	}
 
-	if ok, err := st.RestoreTask(ctx, board.ID, first.ID); err != nil || !ok {
+	if ok, err := st.RestoreTask(ctx, board.ID, winner.ID); err != nil || !ok {
 		t.Fatalf("restore: ok=%v err=%v", ok, err)
 	}
 	active, done, _ = st.TasksForBoard(ctx, board.ID)

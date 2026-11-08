@@ -423,6 +423,119 @@
 				padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
 			}
 
+			/* ── Members ── */
+			#members-modal {
+				position: fixed;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.7);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 1rem;
+				z-index: 150;
+			}
+
+			.modal-card {
+				background: #161616;
+				border: 1px solid #2a2a2a;
+				border-radius: 0.6rem;
+				width: 100%;
+				max-width: 460px;
+				max-height: 85dvh;
+				overflow-y: auto;
+				padding: 1rem;
+				display: flex;
+				flex-direction: column;
+				gap: 0.8rem;
+			}
+
+			.modal-head {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			}
+
+			.modal-head h3 {
+				font-size: 1rem;
+				font-weight: 500;
+				color: #a6e3a1;
+			}
+
+			#members-close {
+				background: none;
+				border: none;
+				color: #6c7086;
+				font-size: 1.2rem;
+				cursor: pointer;
+				padding: 0.2rem 0.5rem;
+			}
+
+			.member-row {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.45rem 0;
+				border-bottom: 1px solid #1c1c1c;
+			}
+
+			.member-name {
+				flex: 1;
+				color: #cdd6f4;
+				overflow-wrap: anywhere;
+			}
+
+			.member-row select,
+			.modal-card select {
+				background: #0f0f0f;
+				border: 1px solid #2a2a2a;
+				border-radius: 0.3rem;
+				color: #cdd6f4;
+				font-family: inherit;
+				font-size: 0.8rem;
+				padding: 0.35rem;
+			}
+
+			.member-form {
+				display: flex;
+				gap: 0.4rem;
+			}
+
+			.member-form .field {
+				font-size: 0.85rem;
+				padding: 0.5rem;
+			}
+
+			.member-section-label {
+				color: #6c7086;
+				font-size: 0.7rem;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+
+			#invite-result {
+				display: flex;
+				gap: 0.4rem;
+			}
+
+			#invite-result .field {
+				font-size: 0.75rem;
+				padding: 0.5rem;
+			}
+
+			#invite-url {
+				flex: 1;
+			}
+
+			.invite-row {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.5rem;
+				color: #585b70;
+				font-size: 0.8rem;
+				padding: 0.3rem 0;
+			}
+
 			#winner-screen {
 				position: fixed;
 				inset: 0;
@@ -538,6 +651,7 @@
 				<div id="board-head">
 					<button id="back" type="button" aria-label="back">←</button>
 					<h2 id="board-title"></h2>
+					<button id="members-btn" class="small-btn muted" type="button">people</button>
 				</div>
 
 				<form id="task-form">
@@ -565,6 +679,51 @@
 					<button id="delete-board" class="small-btn muted" type="button">delete board</button>
 				</div>
 			</section>
+
+			<div id="members-modal" hidden>
+				<div class="modal-card">
+					<div class="modal-head">
+						<h3>members</h3>
+						<button id="members-close" type="button" aria-label="close">×</button>
+					</div>
+
+					<ul id="member-list"></ul>
+
+					<div id="owner-tools" hidden>
+						<p class="member-section-label">add by username</p>
+						<form id="add-member-form" class="member-form">
+							<input
+								id="member-username"
+								class="field"
+								type="text"
+								placeholder="username"
+								autocomplete="off"
+								autocapitalize="none"
+								spellcheck="false"
+							/>
+							<select id="member-role">
+								<option value="editor">editor</option>
+								<option value="viewer">viewer</option>
+							</select>
+							<button class="primary" type="submit">add</button>
+						</form>
+
+						<p class="member-section-label">invite link (7 days)</p>
+						<form id="invite-form" class="member-form">
+							<select id="invite-role">
+								<option value="editor">editor</option>
+								<option value="viewer">viewer</option>
+							</select>
+							<button class="primary" type="submit">create link</button>
+						</form>
+						<div id="invite-result" hidden>
+							<input id="invite-url" class="field" type="text" readonly />
+							<button id="invite-copy" class="small-btn" type="button">copy</button>
+						</div>
+						<ul id="invite-list"></ul>
+					</div>
+				</div>
+			</div>
 		</div>
 
 		<script>
@@ -607,9 +766,33 @@
 			const renameBtn = $("rename-board");
 			const deleteBtn = $("delete-board");
 			const winnerScreen = $("winner-screen");
+			const buttonsContainer = $("buttons-container");
+
+			const membersBtn = $("members-btn");
+			const membersModal = $("members-modal");
+			const membersClose = $("members-close");
+			const memberList = $("member-list");
+			const ownerTools = $("owner-tools");
+			const addMemberForm = $("add-member-form");
+			const memberUsername = $("member-username");
+			const memberRoleSelect = $("member-role");
+			const inviteForm = $("invite-form");
+			const inviteRoleSelect = $("invite-role");
+			const inviteResult = $("invite-result");
+			const inviteURL = $("invite-url");
+			const inviteCopy = $("invite-copy");
+			const inviteList = $("invite-list");
 
 			const isTouch = matchMedia("(hover: none) and (pointer: coarse)").matches;
-			const state = { user: null, boards: [], board: null, active: [], done: [] };
+			const state = {
+				user: null,
+				boards: [],
+				board: null,
+				active: [],
+				done: [],
+				members: [],
+				invites: [],
+			};
 			let authMode = "login";
 			let spinning = false;
 			let toastTimer = 0;
@@ -650,12 +833,13 @@
 			function showAuth() {
 				state.user = null;
 				state.board = null;
+				membersModal.hidden = true;
 				boot.hidden = true;
 				app.hidden = true;
 				authScreen.hidden = false;
 				authError.textContent = "";
 				authPassword.value = "";
-				if (location.hash) location.hash = "";
+				if (location.hash && !location.hash.startsWith("#/join/")) location.hash = "";
 				if (!isTouch) authUsername.focus();
 			}
 
@@ -666,13 +850,17 @@
 				app.hidden = false;
 				whoami.textContent = "@" + user.username;
 				route();
+				const pending = sessionStorage.getItem("pending-join");
+				if (pending && !location.hash.startsWith("#/join/")) acceptInvite(pending);
 			}
 
 			// ── Routing ──
 			function route() {
 				if (!state.user) return;
 				const hash = location.hash || "#/";
-				if (hash.startsWith("#/b/")) {
+				if (hash.startsWith("#/join/")) {
+					acceptInvite(hash.slice("#/join/".length));
+				} else if (hash.startsWith("#/b/")) {
 					openBoard(hash.slice(4));
 				} else {
 					showBoards();
@@ -690,6 +878,7 @@
 			async function showBoards() {
 				boardView.hidden = true;
 				boardsView.hidden = false;
+				membersModal.hidden = true;
 				state.board = null;
 				try {
 					const data = await api("/api/boards");
@@ -798,6 +987,7 @@
 
 			// ── Board ──
 			async function openBoard(id) {
+				membersModal.hidden = true;
 				try {
 					const data = await api(`/api/boards/${encodeURIComponent(id)}`);
 					state.board = data.board;
@@ -819,9 +1009,12 @@
 			function renderBoard() {
 				const board = state.board;
 				if (!board) return;
+				const canEdit = board.role === "owner" || board.role === "editor";
 
 				boardTitle.textContent = board.name;
 				boardAdmin.hidden = board.role !== "owner";
+				taskForm.hidden = !canEdit;
+				buttonsContainer.hidden = !canEdit;
 				doneWrap.hidden = state.done.length === 0;
 				doneSummary.textContent = `done (${state.done.length})`;
 
@@ -831,6 +1024,7 @@
 			}
 
 			function renderActive() {
+				const canEdit = state.board && (state.board.role === "owner" || state.board.role === "editor");
 				list.innerHTML = "";
 				listEmpty.hidden = state.active.length > 0;
 
@@ -838,36 +1032,43 @@
 					const li = document.createElement("li");
 					const text = document.createElement("span");
 					text.textContent = task.text;
+					li.appendChild(text);
 
-					const del = document.createElement("button");
-					del.type = "button";
-					del.className = "icon-btn";
-					del.title = "delete";
-					del.setAttribute("aria-label", "delete task");
-					del.textContent = "×";
-					del.addEventListener("click", () => deleteTask(task.id));
+					if (canEdit) {
+						const del = document.createElement("button");
+						del.type = "button";
+						del.className = "icon-btn";
+						del.title = "delete";
+						del.setAttribute("aria-label", "delete task");
+						del.textContent = "×";
+						del.addEventListener("click", () => deleteTask(task.id));
+						li.appendChild(del);
+					}
 
-					li.append(text, del);
 					list.appendChild(li);
 				}
 			}
 
 			function renderDone() {
+				const canEdit = state.board && (state.board.role === "owner" || state.board.role === "editor");
 				doneList.innerHTML = "";
 				for (const task of state.done) {
 					const li = document.createElement("li");
 					const text = document.createElement("span");
 					text.textContent = task.text;
+					li.appendChild(text);
 
-					const restore = document.createElement("button");
-					restore.type = "button";
-					restore.className = "icon-btn";
-					restore.title = "restore";
-					restore.setAttribute("aria-label", "restore task");
-					restore.textContent = "↺";
-					restore.addEventListener("click", () => restoreTask(task.id));
+					if (canEdit) {
+						const restore = document.createElement("button");
+						restore.type = "button";
+						restore.className = "icon-btn";
+						restore.title = "restore";
+						restore.setAttribute("aria-label", "restore task");
+						restore.textContent = "↺";
+						restore.addEventListener("click", () => restoreTask(task.id));
+						li.appendChild(restore);
+					}
 
-					li.append(text, restore);
 					doneList.appendChild(li);
 				}
 			}
@@ -951,6 +1152,212 @@
 					handleError(err);
 				}
 			});
+
+			// ── Members & invites ──
+			function isOwner() {
+				return state.board && state.board.role === "owner";
+			}
+
+			async function openMembers() {
+				if (!state.board) return;
+				ownerTools.hidden = !isOwner();
+				inviteResult.hidden = true;
+				membersModal.hidden = false;
+				await loadMembers();
+			}
+
+			function closeMembers() {
+				membersModal.hidden = true;
+			}
+
+			async function loadMembers() {
+				if (!state.board) return;
+				try {
+					const requests = [api(`/api/boards/${state.board.id}/members`)];
+					if (isOwner()) requests.push(api(`/api/boards/${state.board.id}/invites`));
+					const [memberData, inviteData] = await Promise.all(requests);
+					state.members = memberData.members || [];
+					state.invites = (inviteData && inviteData.invites) || [];
+					renderMembers();
+					renderInvites();
+				} catch (err) {
+					handleError(err);
+				}
+			}
+
+			function renderMembers() {
+				memberList.innerHTML = "";
+				const manage = isOwner();
+
+				for (const member of state.members) {
+					const li = document.createElement("li");
+					li.className = "member-row";
+
+					const name = document.createElement("span");
+					name.className = "member-name";
+					name.textContent = member.username + (member.user_id === state.user.id ? " (you)" : "");
+					li.appendChild(name);
+
+					if (manage && member.role !== "owner") {
+						const select = document.createElement("select");
+						for (const role of ["editor", "viewer"]) {
+							const option = document.createElement("option");
+							option.value = role;
+							option.textContent = role;
+							if (role === member.role) option.selected = true;
+							select.appendChild(option);
+						}
+						select.addEventListener("change", () => setMemberRole(member.user_id, select.value));
+						li.appendChild(select);
+
+						const remove = document.createElement("button");
+						remove.type = "button";
+						remove.className = "icon-btn";
+						remove.title = "remove";
+						remove.setAttribute("aria-label", "remove member");
+						remove.textContent = "×";
+						remove.addEventListener("click", () => removeMember(member));
+						li.appendChild(remove);
+					} else {
+						const role = document.createElement("span");
+						role.className = "board-role";
+						role.textContent = member.role;
+						li.appendChild(role);
+					}
+
+					memberList.appendChild(li);
+				}
+			}
+
+			function renderInvites() {
+				inviteList.innerHTML = "";
+				for (const invite of state.invites) {
+					const li = document.createElement("li");
+					li.className = "invite-row";
+
+					const label = document.createElement("span");
+					const expires = new Date(invite.expires_at);
+					label.textContent = `${invite.role} · expires ${expires.toLocaleDateString()}`;
+
+					const revoke = document.createElement("button");
+					revoke.type = "button";
+					revoke.className = "small-btn muted";
+					revoke.textContent = "revoke";
+					revoke.addEventListener("click", () => revokeInvite(invite.id));
+
+					li.append(label, revoke);
+					inviteList.appendChild(li);
+				}
+			}
+
+			async function setMemberRole(userId, role) {
+				try {
+					await api(`/api/boards/${state.board.id}/members/${userId}`, {
+						method: "PATCH",
+						body: JSON.stringify({ role }),
+					});
+					await loadMembers();
+				} catch (err) {
+					handleError(err);
+					await loadMembers();
+				}
+			}
+
+			async function removeMember(member) {
+				if (!confirm(`remove ${member.username} from this board?`)) return;
+				try {
+					await api(`/api/boards/${state.board.id}/members/${member.user_id}`, { method: "DELETE" });
+					await loadMembers();
+				} catch (err) {
+					handleError(err);
+				}
+			}
+
+			async function revokeInvite(inviteId) {
+				try {
+					await api(`/api/boards/${state.board.id}/invites/${inviteId}`, { method: "DELETE" });
+					await loadMembers();
+				} catch (err) {
+					handleError(err);
+				}
+			}
+
+			membersBtn.addEventListener("click", openMembers);
+			membersClose.addEventListener("click", closeMembers);
+			membersModal.addEventListener("click", (e) => {
+				if (e.target === membersModal) closeMembers();
+			});
+			document.addEventListener("keydown", (e) => {
+				if (e.key === "Escape" && !membersModal.hidden) closeMembers();
+			});
+
+			addMemberForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				const username = memberUsername.value.trim();
+				if (!username) return;
+				try {
+					await api(`/api/boards/${state.board.id}/members`, {
+						method: "POST",
+						body: JSON.stringify({ username, role: memberRoleSelect.value }),
+					});
+					memberUsername.value = "";
+					toast(`added ${username}`);
+					await loadMembers();
+				} catch (err) {
+					handleError(err);
+				}
+			});
+
+			inviteForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				try {
+					const data = await api(`/api/boards/${state.board.id}/invites`, {
+						method: "POST",
+						body: JSON.stringify({ role: inviteRoleSelect.value }),
+					});
+					inviteURL.value = `${location.origin}/join/${data.token}`;
+					inviteResult.hidden = false;
+					inviteURL.select();
+				} catch (err) {
+					handleError(err);
+				}
+			});
+
+			inviteCopy.addEventListener("click", async () => {
+				try {
+					await navigator.clipboard.writeText(inviteURL.value);
+					toast("link copied");
+				} catch {
+					inviteURL.select();
+					document.execCommand("copy");
+					toast("link copied");
+				}
+			});
+
+			// ── Join by invite ──
+			async function acceptInvite(token) {
+				sessionStorage.setItem("pending-join", token);
+				try {
+					const data = await api(`/api/invites/${encodeURIComponent(token)}/accept`, {
+						method: "POST",
+					});
+					sessionStorage.removeItem("pending-join");
+					toast(`joined as ${data.role}`);
+					navigate(`#/b/${data.board_id}`);
+				} catch (err) {
+					if (err.status === 401) {
+						handleError(err);
+						return;
+					}
+					sessionStorage.removeItem("pending-join");
+					if (err.status === 404) {
+						toast("invite is invalid or expired");
+						navigate("#/");
+						return;
+					}
+					handleError(err);
+				}
+			}
 
 			// ── Spin ──
 			function animateTo(target) {
@@ -1076,13 +1483,14 @@
 				} catch {
 					/* ignore */
 				}
+				sessionStorage.removeItem("pending-join");
 				showAuth();
 			});
 
 			// ── Keyboard / focus ──
 			document.addEventListener("keydown", (e) => {
-				if (boardView.hidden) return;
-				if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+				if (boardView.hidden || taskForm.hidden) return;
+				if (membersModal.hidden && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
 					if (document.activeElement !== taskInput) {
 						taskInput.focus();
 						taskInput.value += e.key;
@@ -1094,11 +1502,20 @@
 
 			if (!isTouch) {
 				document.addEventListener("click", (e) => {
-					if (boardView.hidden) return;
-					if (e.target.closest("button")) return;
+					if (boardView.hidden || taskForm.hidden) return;
+					if (e.target.closest("button") || !membersModal.hidden) return;
 					taskInput.focus();
 				});
 			}
+
+			// A shared /join/<token> link is served by the SPA fallback; keep the
+			// token and return the address bar to a clean hash route.
+			(function () {
+				const match = location.pathname.match(/^\/join\/([^/]+)\/?$/);
+				if (!match) return;
+				sessionStorage.setItem("pending-join", decodeURIComponent(match[1]));
+				history.replaceState(null, "", "/");
+			})();
 
 			// ── Bootstrap ──
 			(async () => {
