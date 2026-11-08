@@ -22,8 +22,15 @@ var (
 	ErrNotFound = errors.New("not found")
 )
 
+// timeLayout is fixed-width so timestamps sort correctly as strings.
+const timeLayout = "2006-01-02T15:04:05.000000Z07:00"
+
 func now() string {
-	return time.Now().UTC().Format(time.RFC3339)
+	return time.Now().UTC().Format(timeLayout)
+}
+
+func formatTime(t time.Time) string {
+	return t.UTC().Format(timeLayout)
 }
 
 // CreateUser inserts a user and returns the public record.

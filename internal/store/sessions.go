@@ -22,7 +22,7 @@ func randomID() string {
 func (s *Store) CreateSession(ctx context.Context, tokenHash, userID string, expires time.Time) error {
 	_, err := s.DB.ExecContext(ctx,
 		`INSERT INTO sessions (token_hash, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)`,
-		tokenHash, userID, expires.UTC().Format(time.RFC3339), now())
+		tokenHash, userID, formatTime(expires), now())
 	return err
 }
 

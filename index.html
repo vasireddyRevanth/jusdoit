@@ -4,7 +4,7 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta name="theme-color" content="#0f0f0f" />
-		<title>list</title>
+		<title>jusdoit</title>
 		<style>
 			* {
 				margin: 0;
@@ -20,7 +20,7 @@
 				background: #0f0f0f;
 				font-family: "Fira Code", monospace;
 				min-height: 100dvh;
-				overflow: hidden; /* prevent whole page scroll */
+				overflow: hidden;
 				display: flex;
 				flex-direction: column;
 				padding-top: env(safe-area-inset-top);
@@ -28,14 +28,16 @@
 				overscroll-behavior: none;
 			}
 
-			/* ── Boot ── */
+			button {
+				font-family: inherit;
+			}
+
 			#boot {
 				flex: 1;
 				display: flex;
 				align-items: center;
 				justify-content: center;
 				color: #6c7086;
-				font-size: 1rem;
 			}
 
 			/* ── Auth ── */
@@ -66,7 +68,7 @@
 				width: 100%;
 			}
 
-			#auth-form input {
+			.field {
 				background: #161616;
 				border: 1px solid #2a2a2a;
 				border-radius: 0.4rem;
@@ -75,13 +77,14 @@
 				font-size: 1rem;
 				padding: 0.75rem;
 				outline: none;
+				width: 100%;
 			}
 
-			#auth-form input:focus {
+			.field:focus {
 				border-color: #89b4fa;
 			}
 
-			#auth-form button {
+			.primary {
 				min-height: 44px;
 				background: #a6e3a1;
 				border: none;
@@ -91,9 +94,10 @@
 				font-size: 1rem;
 				font-weight: 600;
 				cursor: pointer;
+				padding: 0 1rem;
 			}
 
-			#auth-form button:disabled {
+			.primary:disabled {
 				opacity: 0.5;
 				cursor: wait;
 			}
@@ -114,7 +118,7 @@
 				cursor: pointer;
 			}
 
-			/* ── App ── */
+			/* ── Shell ── */
 			#app {
 				flex: 1;
 				display: flex;
@@ -140,25 +144,154 @@
 				border: 1px solid #2a2a2a;
 				border-radius: 0.3rem;
 				color: #6c7086;
-				font: inherit;
 				font-size: 0.75rem;
 				padding: 0.35rem 0.6rem;
 				cursor: pointer;
 			}
 
-			/* ── Sticky input at top ── */
-			#form {
-				position: sticky;
-				top: 0;
-				background: #0f0f0f;
-				padding: 0.5rem 0.5rem 1rem;
-				z-index: 10;
+			/* ── Boards list ── */
+			#boards-view {
+				flex: 1;
+				min-height: 0;
 				display: flex;
-				justify-content: center;
+				flex-direction: column;
+				gap: 0.9rem;
+				padding: 0.5rem 0.75rem 1rem;
+			}
+
+			#board-form {
+				display: flex;
+				gap: 0.5rem;
+				width: 100%;
+				max-width: 600px;
+				margin: 0 auto;
+			}
+
+			#board-form .field {
+				padding: 0.6rem 0.75rem;
+			}
+
+			#import-banner {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.5rem;
+				width: 100%;
+				max-width: 600px;
+				margin: 0 auto;
+				border: 1px solid #2a2a2a;
+				border-radius: 0.4rem;
+				padding: 0.6rem 0.75rem;
+				font-size: 0.85rem;
+				color: #cdd6f4;
+			}
+
+			#import-banner span {
+				flex: 1;
+			}
+
+			.small-btn {
+				background: none;
+				border: 1px solid #2a2a2a;
+				border-radius: 0.3rem;
+				color: #89b4fa;
+				font-size: 0.75rem;
+				padding: 0.35rem 0.6rem;
+				cursor: pointer;
+			}
+
+			.small-btn.muted {
+				color: #6c7086;
+			}
+
+			#boards {
+				list-style: none;
+				width: 100%;
+				max-width: 600px;
+				margin: 0 auto;
+				overflow-y: auto;
+				flex: 1;
+			}
+
+			#boards li {
+				margin-bottom: 0.5rem;
+			}
+
+			#boards .board-open {
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 0.75rem;
+				background: #161616;
+				border: 1px solid #2a2a2a;
+				border-radius: 0.4rem;
+				color: #cdd6f4;
+				font-size: 1rem;
+				padding: 0.85rem 0.9rem;
+				cursor: pointer;
+				text-align: left;
+			}
+
+			#boards .board-open:hover {
+				border-color: #a6e3a1;
+			}
+
+			.board-role {
+				color: #6c7086;
+				font-size: 0.7rem;
+				text-transform: uppercase;
+				letter-spacing: 0.08em;
+			}
+
+			.empty {
+				color: #6c7086;
+				font-size: 0.9rem;
+				text-align: center;
+				padding: 1.5rem 0;
+			}
+
+			/* ── Board view ── */
+			#board-view {
+				flex: 1;
+				min-height: 0;
+				display: flex;
+				flex-direction: column;
+			}
+
+			#board-head {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.25rem 0.75rem 0.5rem;
 				flex-shrink: 0;
 			}
 
-			#input {
+			#back {
+				background: none;
+				border: none;
+				color: #6c7086;
+				font-size: 1.1rem;
+				cursor: pointer;
+				padding: 0.25rem 0.4rem;
+			}
+
+			#board-title {
+				flex: 1;
+				color: #a6e3a1;
+				font-size: 1.05rem;
+				font-weight: 500;
+				overflow-wrap: anywhere;
+			}
+
+			#task-form {
+				display: flex;
+				justify-content: center;
+				flex-shrink: 0;
+				padding: 0.25rem 0.5rem 0.75rem;
+			}
+
+			#task-input {
 				background: transparent;
 				border: none;
 				outline: none;
@@ -171,30 +304,43 @@
 				padding: 0.5rem;
 			}
 
-			/* ── Scrollable list ── */
 			#list-container {
 				flex: 1;
+				min-height: 0;
 				overflow-y: auto;
-				padding: 1rem 0.5rem;
+				padding: 0.5rem;
 				display: flex;
 				flex-direction: column;
 				align-items: center;
 				-webkit-overflow-scrolling: touch;
 				scroll-behavior: smooth;
-				min-height: 0;
 			}
 
-			#list {
+			#list,
+			#done-list {
 				list-style: none;
-				color: #a6e3a1;
-				font-size: 1.1rem;
-				text-align: center;
 				width: 100%;
 				max-width: 600px;
 			}
 
-			#list li {
+			#list {
+				color: #a6e3a1;
+				font-size: 1.1rem;
+			}
+
+			#list li,
+			#done-list li {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
 				padding: 0.3rem 0;
+				text-align: center;
+			}
+
+			#list li span,
+			#done-list li span {
+				overflow-wrap: anywhere;
 			}
 
 			#list li.highlight {
@@ -202,14 +348,79 @@
 				border-radius: 0.4rem;
 			}
 
-			/* Desktop: larger type */
-			@media (min-width: 641px) {
-				#input {
-					font-size: 2rem;
-				}
-				#list {
-					font-size: 1.5rem;
-				}
+			.icon-btn {
+				background: none;
+				border: none;
+				color: #585b70;
+				font-size: 0.9em;
+				cursor: pointer;
+				padding: 0.2rem 0.4rem;
+				flex-shrink: 0;
+			}
+
+			.icon-btn:hover {
+				color: #f38ba8;
+			}
+
+			#done-wrap {
+				flex-shrink: 0;
+				max-height: 28vh;
+				overflow-y: auto;
+				border-top: 1px solid #1c1c1c;
+				padding: 0.4rem 0.75rem 0;
+			}
+
+			#done-wrap summary {
+				color: #6c7086;
+				font-size: 0.85rem;
+				cursor: pointer;
+				padding: 0.25rem 0;
+			}
+
+			#done-list {
+				color: #585b70;
+				font-size: 0.95rem;
+				padding-bottom: 0.4rem;
+			}
+
+			#done-list li span {
+				text-decoration: line-through;
+			}
+
+			#buttons-container {
+				display: flex;
+				justify-content: center;
+				flex-shrink: 0;
+				padding: 0.75rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom));
+			}
+
+			#spin {
+				min-height: 44px;
+				min-width: 44px;
+				padding: 0.5rem 1.5rem;
+				font: inherit;
+				border: 1px solid #a6e3a1;
+				background: transparent;
+				color: #a6e3a1;
+				border-radius: 0.4rem;
+				cursor: pointer;
+			}
+
+			#spin:hover:not(:disabled) {
+				background: #a6e3a1;
+				color: #0f0f0f;
+			}
+
+			#spin:disabled {
+				opacity: 0.4;
+				cursor: default;
+			}
+
+			#board-admin {
+				display: flex;
+				justify-content: center;
+				gap: 0.5rem;
+				padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
 			}
 
 			#winner-screen {
@@ -234,33 +445,34 @@
 				pointer-events: auto;
 			}
 
-			#buttons-container {
-				display: flex;
-				justify-content: center;
-				padding: 1rem 0.5rem calc(1rem + env(safe-area-inset-bottom));
-				flex-shrink: 0;
-			}
-
-			#ROLL_DA_THANG {
-				min-height: 44px;
-				min-width: 44px;
-				padding: 0.5rem 1.5rem;
-				font: inherit;
-				border: 1px solid #a6e3a1;
-				background: transparent;
-				color: #a6e3a1;
+			#toast {
+				position: fixed;
+				left: 50%;
+				bottom: calc(1rem + env(safe-area-inset-bottom));
+				transform: translateX(-50%);
+				max-width: 90vw;
+				background: #1c1c1c;
+				border: 1px solid #f38ba8;
 				border-radius: 0.4rem;
-				cursor: pointer;
+				color: #f38ba8;
+				font-size: 0.85rem;
+				padding: 0.5rem 0.75rem;
+				z-index: 200;
 			}
 
-			#ROLL_DA_THANG:hover {
-				background: #a6e3a1;
-				color: #0f0f0f;
+			@media (min-width: 641px) {
+				#task-input {
+					font-size: 2rem;
+				}
+				#list {
+					font-size: 1.5rem;
+				}
 			}
 		</style>
 	</head>
 	<body>
 		<div id="winner-screen"></div>
+		<div id="toast" hidden></div>
 
 		<div id="boot">loading…</div>
 
@@ -269,6 +481,7 @@
 			<form id="auth-form">
 				<input
 					id="auth-username"
+					class="field"
 					type="text"
 					name="username"
 					placeholder="username"
@@ -279,13 +492,14 @@
 				/>
 				<input
 					id="auth-password"
+					class="field"
 					type="password"
 					name="password"
 					placeholder="password"
 					autocomplete="current-password"
 					required
 				/>
-				<button id="auth-submit" type="submit">log in</button>
+				<button id="auth-submit" class="primary" type="submit">log in</button>
 			</form>
 			<p id="auth-error" role="alert"></p>
 			<button id="auth-toggle" type="button">no account? sign up</button>
@@ -297,42 +511,116 @@
 				<button id="logout" type="button">log out</button>
 			</header>
 
-			<form id="form">
-				<input id="input" type="text" spellcheck="false" autocomplete="off" />
-			</form>
+			<section id="boards-view" hidden>
+				<form id="board-form">
+					<input
+						id="board-name"
+						class="field"
+						type="text"
+						placeholder="new board"
+						maxlength="60"
+						autocomplete="off"
+					/>
+					<button class="primary" type="submit">create</button>
+				</form>
 
-			<div id="list-container">
-				<ul id="list"></ul>
-			</div>
+				<div id="import-banner" hidden>
+					<span id="import-text"></span>
+					<button id="import-yes" class="small-btn" type="button">import</button>
+					<button id="import-no" class="small-btn muted" type="button">dismiss</button>
+				</div>
 
-			<div id="buttons-container">
-				<button id="ROLL_DA_THANG">spin</button>
-			</div>
+				<ul id="boards"></ul>
+				<p id="boards-empty" class="empty" hidden>no boards yet — create one above</p>
+			</section>
+
+			<section id="board-view" hidden>
+				<div id="board-head">
+					<button id="back" type="button" aria-label="back">←</button>
+					<h2 id="board-title"></h2>
+				</div>
+
+				<form id="task-form">
+					<input id="task-input" type="text" spellcheck="false" autocomplete="off" maxlength="500" />
+				</form>
+
+				<div id="list-container">
+					<ul id="list"></ul>
+					<p id="list-empty" class="empty" hidden>spin something onto the list</p>
+				</div>
+
+				<div id="done-wrap" hidden>
+					<details id="done-details">
+						<summary id="done-summary">done</summary>
+						<ul id="done-list"></ul>
+					</details>
+				</div>
+
+				<div id="buttons-container">
+					<button id="spin" type="button">spin</button>
+				</div>
+
+				<div id="board-admin" hidden>
+					<button id="rename-board" class="small-btn muted" type="button">rename</button>
+					<button id="delete-board" class="small-btn muted" type="button">delete board</button>
+				</div>
+			</section>
 		</div>
 
 		<script>
-			const boot = document.getElementById("boot");
-			const authScreen = document.getElementById("auth-screen");
-			const app = document.getElementById("app");
-			const authForm = document.getElementById("auth-form");
-			const authUsername = document.getElementById("auth-username");
-			const authPassword = document.getElementById("auth-password");
-			const authSubmit = document.getElementById("auth-submit");
-			const authToggle = document.getElementById("auth-toggle");
-			const authError = document.getElementById("auth-error");
-			const whoami = document.getElementById("whoami");
-			const logoutBtn = document.getElementById("logout");
+			const $ = (id) => document.getElementById(id);
 
-			const form = document.getElementById("form");
-			const input = document.getElementById("input");
-			const list = document.getElementById("list");
-			const spin_btn = document.getElementById("ROLL_DA_THANG");
-			const winnerScreen = document.getElementById("winner-screen");
+			const boot = $("boot");
+			const authScreen = $("auth-screen");
+			const authForm = $("auth-form");
+			const authUsername = $("auth-username");
+			const authPassword = $("auth-password");
+			const authSubmit = $("auth-submit");
+			const authToggle = $("auth-toggle");
+			const authError = $("auth-error");
+			const whoami = $("whoami");
+			const logoutBtn = $("logout");
+			const app = $("app");
+			const toastEl = $("toast");
+
+			const boardsView = $("boards-view");
+			const boardForm = $("board-form");
+			const boardName = $("board-name");
+			const boardsList = $("boards");
+			const boardsEmpty = $("boards-empty");
+			const importBanner = $("import-banner");
+			const importText = $("import-text");
+			const importYes = $("import-yes");
+			const importNo = $("import-no");
+
+			const boardView = $("board-view");
+			const boardTitle = $("board-title");
+			const taskForm = $("task-form");
+			const taskInput = $("task-input");
+			const list = $("list");
+			const listEmpty = $("list-empty");
+			const doneWrap = $("done-wrap");
+			const doneSummary = $("done-summary");
+			const doneList = $("done-list");
+			const spinBtn = $("spin");
+			const boardAdmin = $("board-admin");
+			const renameBtn = $("rename-board");
+			const deleteBtn = $("delete-board");
+			const winnerScreen = $("winner-screen");
 
 			const isTouch = matchMedia("(hover: none) and (pointer: coarse)").matches;
+			const state = { user: null, boards: [], board: null, active: [], done: [] };
 			let authMode = "login";
+			let spinning = false;
+			let toastTimer = 0;
 
-			// ── API helper ──
+			function toast(msg) {
+				toastEl.textContent = msg;
+				toastEl.hidden = false;
+				clearTimeout(toastTimer);
+				toastTimer = setTimeout(() => (toastEl.hidden = true), 3000);
+			}
+
 			async function api(path, options = {}) {
 				const res = await fetch(path, {
 					headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -343,28 +631,406 @@
 					data = await res.json().catch(() => null);
 				}
 				if (!res.ok) {
-					throw new Error((data && data.error) || `request failed (${res.status})`);
+					const err = new Error((data && data.error) || `request failed (${res.status})`);
+					err.status = res.status;
+					throw err;
 				}
 				return data;
 			}
 
+			function handleError(err) {
+				if (err.status === 401) {
+					showAuth();
+					return;
+				}
+				toast(err.message);
+			}
+
 			// ── Screens ──
 			function showAuth() {
+				state.user = null;
+				state.board = null;
 				boot.hidden = true;
 				app.hidden = true;
 				authScreen.hidden = false;
 				authError.textContent = "";
 				authPassword.value = "";
+				if (location.hash) location.hash = "";
 				if (!isTouch) authUsername.focus();
 			}
 
 			function showApp(user) {
+				state.user = user;
 				boot.hidden = true;
 				authScreen.hidden = true;
 				app.hidden = false;
 				whoami.textContent = "@" + user.username;
-				renderTasks();
+				route();
 			}
+
+			// ── Routing ──
+			function route() {
+				if (!state.user) return;
+				const hash = location.hash || "#/";
+				if (hash.startsWith("#/b/")) {
+					openBoard(hash.slice(4));
+				} else {
+					showBoards();
+				}
+			}
+
+			function navigate(hash) {
+				if (location.hash === hash) route();
+				else location.hash = hash;
+			}
+
+			window.addEventListener("hashchange", route);
+
+			// ── Boards ──
+			async function showBoards() {
+				boardView.hidden = true;
+				boardsView.hidden = false;
+				state.board = null;
+				try {
+					const data = await api("/api/boards");
+					state.boards = data.boards || [];
+					renderBoards();
+					maybeShowImport();
+				} catch (err) {
+					handleError(err);
+				}
+			}
+
+			function renderBoards() {
+				boardsList.innerHTML = "";
+				boardsEmpty.hidden = state.boards.length > 0;
+
+				for (const board of state.boards) {
+					const li = document.createElement("li");
+					const btn = document.createElement("button");
+					btn.type = "button";
+					btn.className = "board-open";
+
+					const name = document.createElement("span");
+					name.textContent = board.name;
+					const role = document.createElement("span");
+					role.className = "board-role";
+					role.textContent = board.role;
+
+					btn.append(name, role);
+					btn.addEventListener("click", () => navigate(`#/b/${board.id}`));
+					li.appendChild(btn);
+					boardsList.appendChild(li);
+				}
+			}
+
+			boardForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				const name = boardName.value.trim();
+				if (!name) return;
+				try {
+					const data = await api("/api/boards", {
+						method: "POST",
+						body: JSON.stringify({ name }),
+					});
+					boardName.value = "";
+					navigate(`#/b/${data.board.id}`);
+				} catch (err) {
+					handleError(err);
+				}
+			});
+
+			// ── Import from this browser ──
+			function localTasks() {
+				try {
+					const parsed = JSON.parse(localStorage.getItem("tasks") || "[]");
+					if (!Array.isArray(parsed)) return [];
+					return parsed
+						.map((t) => String(t).trim())
+						.filter((t) => t.length > 0);
+				} catch {
+					return [];
+				}
+			}
+
+			function maybeShowImport() {
+				const tasks = localTasks();
+				if (!tasks.length || localStorage.getItem("import-done")) return;
+				const n = tasks.length;
+				importText.textContent = `import ${n} saved task${n === 1 ? "" : "s"} from this browser?`;
+				importBanner.hidden = false;
+			}
+
+			importYes.addEventListener("click", async () => {
+				const tasks = localTasks();
+				if (!tasks.length) {
+					importBanner.hidden = true;
+					return;
+				}
+				importYes.disabled = true;
+				try {
+					const created = await api("/api/boards", {
+						method: "POST",
+						body: JSON.stringify({ name: "imported" }),
+					});
+					// Local order is newest first; add oldest first so the order survives.
+					for (const text of tasks.slice().reverse()) {
+						await api(`/api/boards/${created.board.id}/tasks`, {
+							method: "POST",
+							body: JSON.stringify({ text }),
+						});
+					}
+					localStorage.removeItem("tasks");
+					localStorage.setItem("import-done", "1");
+					importBanner.hidden = true;
+					navigate(`#/b/${created.board.id}`);
+				} catch (err) {
+					handleError(err);
+				} finally {
+					importYes.disabled = false;
+				}
+			});
+
+			importNo.addEventListener("click", () => {
+				localStorage.setItem("import-done", "1");
+				importBanner.hidden = true;
+			});
+
+			// ── Board ──
+			async function openBoard(id) {
+				try {
+					const data = await api(`/api/boards/${encodeURIComponent(id)}`);
+					state.board = data.board;
+					state.active = data.active || [];
+					state.done = data.done || [];
+					boardsView.hidden = true;
+					boardView.hidden = false;
+					renderBoard();
+				} catch (err) {
+					if (err.status === 404) {
+						navigate("#/");
+						toast("board not found");
+						return;
+					}
+					handleError(err);
+				}
+			}
+
+			function renderBoard() {
+				const board = state.board;
+				if (!board) return;
+
+				boardTitle.textContent = board.name;
+				boardAdmin.hidden = board.role !== "owner";
+				doneWrap.hidden = state.done.length === 0;
+				doneSummary.textContent = `done (${state.done.length})`;
+
+				renderActive();
+				renderDone();
+				spinBtn.disabled = state.active.length === 0;
+			}
+
+			function renderActive() {
+				list.innerHTML = "";
+				listEmpty.hidden = state.active.length > 0;
+
+				for (const task of state.active) {
+					const li = document.createElement("li");
+					const text = document.createElement("span");
+					text.textContent = task.text;
+
+					const del = document.createElement("button");
+					del.type = "button";
+					del.className = "icon-btn";
+					del.title = "delete";
+					del.setAttribute("aria-label", "delete task");
+					del.textContent = "×";
+					del.addEventListener("click", () => deleteTask(task.id));
+
+					li.append(text, del);
+					list.appendChild(li);
+				}
+			}
+
+			function renderDone() {
+				doneList.innerHTML = "";
+				for (const task of state.done) {
+					const li = document.createElement("li");
+					const text = document.createElement("span");
+					text.textContent = task.text;
+
+					const restore = document.createElement("button");
+					restore.type = "button";
+					restore.className = "icon-btn";
+					restore.title = "restore";
+					restore.setAttribute("aria-label", "restore task");
+					restore.textContent = "↺";
+					restore.addEventListener("click", () => restoreTask(task.id));
+
+					li.append(text, restore);
+					doneList.appendChild(li);
+				}
+			}
+
+			async function deleteTask(taskId) {
+				try {
+					await api(`/api/boards/${state.board.id}/tasks/${taskId}`, { method: "DELETE" });
+					state.active = state.active.filter((t) => t.id !== taskId);
+					renderBoard();
+				} catch (err) {
+					handleError(err);
+				}
+			}
+
+			async function restoreTask(taskId) {
+				try {
+					await api(`/api/boards/${state.board.id}/tasks/${taskId}/restore`, { method: "POST" });
+					await refreshBoard();
+				} catch (err) {
+					handleError(err);
+				}
+			}
+
+			async function refreshBoard() {
+				if (!state.board) return;
+				try {
+					const data = await api(`/api/boards/${state.board.id}`);
+					state.board = data.board;
+					state.active = data.active || [];
+					state.done = data.done || [];
+					renderBoard();
+				} catch (err) {
+					handleError(err);
+				}
+			}
+
+			taskForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				const text = taskInput.value.trim();
+				if (!text || !state.board) return;
+				try {
+					const data = await api(`/api/boards/${state.board.id}/tasks`, {
+						method: "POST",
+						body: JSON.stringify({ text }),
+					});
+					state.active.unshift(data.task);
+					taskInput.value = "";
+					renderBoard();
+				} catch (err) {
+					handleError(err);
+				}
+			});
+
+			$("back").addEventListener("click", () => navigate("#/"));
+
+			renameBtn.addEventListener("click", async () => {
+				if (!state.board) return;
+				const name = prompt("board name", state.board.name);
+				if (name === null) return;
+				const trimmed = name.trim();
+				if (!trimmed) return;
+				try {
+					const data = await api(`/api/boards/${state.board.id}`, {
+						method: "PATCH",
+						body: JSON.stringify({ name: trimmed }),
+					});
+					state.board = data.board;
+					renderBoard();
+				} catch (err) {
+					handleError(err);
+				}
+			});
+
+			deleteBtn.addEventListener("click", async () => {
+				if (!state.board) return;
+				if (!confirm(`delete "${state.board.name}" and all its tasks?`)) return;
+				try {
+					await api(`/api/boards/${state.board.id}`, { method: "DELETE" });
+					navigate("#/");
+				} catch (err) {
+					handleError(err);
+				}
+			});
+
+			// ── Spin ──
+			function animateTo(target) {
+				return new Promise((resolve) => {
+					if (!list.children.length) {
+						resolve();
+						return;
+					}
+					const size = list.children.length;
+					const minTicks = size * 3;
+					let index = 0;
+					let speed = 50;
+					let ticks = 0;
+
+					function tick() {
+						list.querySelector(".highlight")?.classList.remove("highlight");
+						list.children[index % size]?.classList.add("highlight");
+
+						if (ticks >= minTicks && index % size === target) {
+							resolve();
+							return;
+						}
+						if (ticks >= minTicks) speed += 40;
+
+						index++;
+						ticks++;
+						setTimeout(tick, speed);
+					}
+
+					tick();
+				});
+			}
+
+			function showWinner(text) {
+				return new Promise((resolve) => {
+					winnerScreen.textContent = text;
+					winnerScreen.classList.add("show");
+					winnerScreen.addEventListener(
+						"click",
+						() => {
+							winnerScreen.classList.remove("show");
+							resolve();
+						},
+						{ once: true },
+					);
+				});
+			}
+
+			spinBtn.addEventListener("click", async () => {
+				if (spinning || !state.board || !state.active.length) return;
+				spinning = true;
+				spinBtn.disabled = true;
+
+				try {
+					const data = await api(`/api/boards/${state.board.id}/spin`, { method: "POST" });
+					if (!data.task) {
+						toast("nothing left to spin");
+						await refreshBoard();
+						return;
+					}
+
+					const winner = data.task;
+					const index = state.active.findIndex((t) => t.id === winner.id);
+
+					if (index >= 0) {
+						await animateTo(index);
+						const dismissed = showWinner(winner.text);
+						refreshBoard();
+						await dismissed;
+					} else {
+						await showWinner(winner.text);
+						await refreshBoard();
+					}
+				} catch (err) {
+					handleError(err);
+				} finally {
+					spinning = false;
+					spinBtn.disabled = state.active.length === 0;
+				}
+			});
 
 			// ── Auth ──
 			authToggle.addEventListener("click", () => {
@@ -394,6 +1060,8 @@
 						method: "POST",
 						body: JSON.stringify({ username, password }),
 					});
+					authPassword.value = "";
+					authUsername.value = data.user.username;
 					showApp(data.user);
 				} catch (err) {
 					authError.textContent = err.message;
@@ -411,104 +1079,28 @@
 				showAuth();
 			});
 
-			// ── Type-anywhere capture (app only) ──
+			// ── Keyboard / focus ──
 			document.addEventListener("keydown", (e) => {
-				if (app.hidden) return;
+				if (boardView.hidden) return;
 				if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-					if (document.activeElement !== input) {
-						input.focus();
-						input.value += e.key;
-						input.dispatchEvent(new Event("input", { bubbles: true }));
+					if (document.activeElement !== taskInput) {
+						taskInput.focus();
+						taskInput.value += e.key;
+						taskInput.dispatchEvent(new Event("input", { bubbles: true }));
 						e.preventDefault();
 					}
 				}
 			});
 
-			// Click anywhere → focus input (desktop only; on touch it would pop the keyboard)
 			if (!isTouch) {
-				document.addEventListener("click", () => {
-					if (!app.hidden) input.focus();
+				document.addEventListener("click", (e) => {
+					if (boardView.hidden) return;
+					if (e.target.closest("button")) return;
+					taskInput.focus();
 				});
 			}
 
-			// ── Tasks (localStorage until boards land) ──
-			let tasks = [];
-			try {
-				tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-				if (!Array.isArray(tasks)) tasks = [];
-			} catch {
-				tasks = [];
-			}
-
-			function saveTasks() {
-				localStorage.setItem("tasks", JSON.stringify(tasks));
-			}
-
-			function renderTasks() {
-				list.innerHTML = "";
-				for (const t of tasks) {
-					const li = document.createElement("li");
-					li.textContent = t;
-					list.appendChild(li);
-				}
-			}
-
-			form.addEventListener("submit", (e) => {
-				e.preventDefault();
-				const text = input.value.trim();
-				if (text) {
-					tasks.unshift(text);
-					saveTasks();
-					renderTasks();
-					input.value = "";
-				}
-			});
-
-			function showWinner(task, onDismiss) {
-				winnerScreen.textContent = task;
-				winnerScreen.classList.add("show");
-
-				winnerScreen.addEventListener("click", function hide() {
-					winnerScreen.classList.remove("show");
-					winnerScreen.removeEventListener("click", hide);
-					onDismiss?.();
-				});
-			}
-
-			spin_btn.addEventListener("click", () => {
-				if (!tasks.length) return;
-
-				const winnerIndex = Math.floor(Math.random() * tasks.length);
-				let index = 0;
-				let speed = 50;
-				let ticks = 0;
-				const minTicks =
-					tasks.length * 3 + Math.floor(Math.random() * tasks.length);
-
-				function tick() {
-					list.querySelector(".highlight")?.classList.remove("highlight");
-					list.children[index % tasks.length].classList.add("highlight");
-
-					if (ticks >= minTicks) {
-						if (index % tasks.length === winnerIndex) {
-							const winner = tasks[winnerIndex];
-							tasks.splice(winnerIndex, 1);
-							saveTasks();
-							showWinner(winner, renderTasks);
-							return;
-						}
-						speed += 40;
-					}
-
-					setTimeout(tick, speed);
-					index++;
-					ticks++;
-				}
-
-				tick();
-			});
-
-			// ── Session bootstrap ──
+			// ── Bootstrap ──
 			(async () => {
 				try {
 					const data = await api("/api/auth/me");

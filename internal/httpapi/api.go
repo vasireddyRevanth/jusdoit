@@ -44,6 +44,16 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/auth/logout", s.handleLogout)
 	mux.HandleFunc("GET /api/auth/me", s.requireAuth(s.handleMe))
 
+	mux.HandleFunc("GET /api/boards", s.requireAuth(s.handleListBoards))
+	mux.HandleFunc("POST /api/boards", s.requireAuth(s.handleCreateBoard))
+	mux.HandleFunc("GET /api/boards/{id}", s.requireBoard(store.RoleViewer, s.handleGetBoard))
+	mux.HandleFunc("PATCH /api/boards/{id}", s.requireBoard(store.RoleOwner, s.handleRenameBoard))
+	mux.HandleFunc("DELETE /api/boards/{id}", s.requireBoard(store.RoleOwner, s.handleDeleteBoard))
+	mux.HandleFunc("POST /api/boards/{id}/tasks", s.requireBoard(store.RoleEditor, s.handleAddTask))
+	mux.HandleFunc("DELETE /api/boards/{id}/tasks/{taskId}", s.requireBoard(store.RoleEditor, s.handleDeleteTask))
+	mux.HandleFunc("POST /api/boards/{id}/tasks/{taskId}/restore", s.requireBoard(store.RoleEditor, s.handleRestoreTask))
+	mux.HandleFunc("POST /api/boards/{id}/spin", s.requireBoard(store.RoleEditor, s.handleSpin))
+
 	return recoverer(logger(csrf(mux)))
 }
 
