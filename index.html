@@ -796,6 +796,10 @@
 			let authMode = "login";
 			let spinning = false;
 			let toastTimer = 0;
+			let pollTimer = 0;
+			let polling = false;
+			let boardsSig = "";
+			let boardSig = "";
 
 			function toast(msg) {
 				toastEl.textContent = msg;
@@ -831,6 +835,7 @@
 
 			// ── Screens ──
 			function showAuth() {
+				stopPolling();
 				state.user = null;
 				state.board = null;
 				membersModal.hidden = true;
@@ -850,6 +855,7 @@
 				app.hidden = false;
 				whoami.textContent = "@" + user.username;
 				route();
+				startPolling();
 				const pending = sessionStorage.getItem("pending-join");
 				if (pending && !location.hash.startsWith("#/join/")) acceptInvite(pending);
 			}
@@ -883,6 +889,7 @@
 				try {
 					const data = await api("/api/boards");
 					state.boards = data.boards || [];
+					boardsSig = JSON.stringify(state.boards);
 					renderBoards();
 					maybeShowImport();
 				} catch (err) {
@@ -993,6 +1000,7 @@
 					state.board = data.board;
 					state.active = data.active || [];
 					state.done = data.done || [];
+					boardSig = JSON.stringify([data.board, data.active, data.done]);
 					boardsView.hidden = true;
 					boardView.hidden = false;
 					renderBoard();
@@ -1096,6 +1104,9 @@
 				if (!state.board) return;
 				try {
 					const data = await api(`/api/boards/${state.board.id}`);
+					const sig = JSON.stringify([data.board, data.active, data.done]);
+					if (sig === boardSig) return;
+					boardSig = sig;
 					state.board = data.board;
 					state.active = data.active || [];
 					state.done = data.done || [];
@@ -1104,6 +1115,54 @@
 					handleError(err);
 				}
 			}
+
+			// ── Live sync ──
+			// Boards and task lists are small, so a short poll keeps multiple
+			// people in step without extra infrastructure. Rendering is skipped
+			// when the payload is unchanged.
+			function stopPolling() {
+				clearInterval(pollTimer);
+				pollTimer = 0;
+			}
+
+			function startPolling() {
+				stopPolling();
+				pollTimer = setInterval(poll, 3000);
+			}
+
+			async function refreshBoards() {
+				if (!state.user) return;
+				try {
+					const data = await api("/api/boards");
+					const sig = JSON.stringify(data.boards || []);
+					if (sig === boardsSig) return;
+					boardsSig = sig;
+					state.boards = data.boards || [];
+					renderBoards();
+				} catch (err) {
+					if (err.status !== 401) return;
+					handleError(err);
+				}
+			}
+
+			async function poll() {
+				if (document.hidden || polling || !state.user) return;
+				if (!boardView.hidden) {
+					if (spinning || !state.board) return;
+					polling = true;
+					try {
+						await refreshBoard();
+					} finally {
+						polling = false;
+					}
+				} else if (!boardsView.hidden) {
+					await refreshBoards();
+				}
+			}
+
+			document.addEventListener("visibilitychange", () => {
+				if (!document.hidden && state.user) poll();
+			});
 
 			taskForm.addEventListener("submit", async (e) => {
 				e.preventDefault();
