@@ -257,6 +257,7 @@
 				min-height: 0;
 				display: flex;
 				flex-direction: column;
+				overflow: hidden;
 			}
 
 			#board-head {
@@ -286,12 +287,19 @@
 
 			#task-form {
 				display: flex;
-				justify-content: center;
+				align-items: center;
+				gap: 0.4rem;
+				width: 100%;
+				max-width: 640px;
+				margin: 0 auto;
 				flex-shrink: 0;
 				padding: 0.25rem 0.5rem 0.75rem;
 			}
 
 			#task-input {
+				flex: 1;
+				min-width: 0;
+				min-height: 44px;
 				background: transparent;
 				border: none;
 				outline: none;
@@ -299,9 +307,29 @@
 				color: #cdd6f4;
 				caret-color: #89b4fa;
 				text-align: center;
-				width: 100%;
-				max-width: 600px;
-				padding: 0.5rem;
+				padding: 0.5rem 0.25rem;
+			}
+
+			#task-input::placeholder {
+				color: #45475a;
+			}
+
+			.task-add {
+				min-width: 44px;
+				min-height: 44px;
+				background: transparent;
+				border: 1px solid #2a2a2a;
+				border-radius: 0.4rem;
+				color: #a6e3a1;
+				font: inherit;
+				font-size: 1.3rem;
+				line-height: 1;
+				cursor: pointer;
+				flex-shrink: 0;
+			}
+
+			.task-add:hover {
+				border-color: #a6e3a1;
 			}
 
 			#list-container {
@@ -325,7 +353,8 @@
 
 			#list {
 				color: #a6e3a1;
-				font-size: 1.1rem;
+				font-size: var(--task-size, 1.1rem);
+				line-height: 1.2;
 			}
 
 			#list li,
@@ -355,6 +384,8 @@
 				font-size: 0.9em;
 				cursor: pointer;
 				padding: 0.2rem 0.4rem;
+				min-width: 36px;
+				min-height: 36px;
 				flex-shrink: 0;
 			}
 
@@ -391,6 +422,7 @@
 				display: flex;
 				justify-content: center;
 				flex-shrink: 0;
+				background: #0f0f0f;
 				padding: 0.75rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom));
 			}
 
@@ -580,9 +612,6 @@
 				#task-input {
 					font-size: 2rem;
 				}
-				#list {
-					font-size: 1.5rem;
-				}
 			}
 		</style>
 	</head>
@@ -658,7 +687,17 @@
 				</div>
 
 				<form id="task-form">
-					<input id="task-input" type="text" spellcheck="false" autocomplete="off" maxlength="500" />
+					<input
+						id="task-input"
+						type="text"
+						placeholder="add a task"
+						aria-label="new task"
+						enterkeyhint="done"
+						spellcheck="false"
+						autocomplete="off"
+						maxlength="500"
+					/>
+					<button id="task-add" class="task-add" type="submit" aria-label="add task">+</button>
 				</form>
 
 				<div id="list-container">
@@ -774,6 +813,7 @@
 			const taskForm = $("task-form");
 			const taskInput = $("task-input");
 			const list = $("list");
+			const listContainer = $("list-container");
 			const listEmpty = $("list-empty");
 			const doneWrap = $("done-wrap");
 			const doneSummary = $("done-summary");
@@ -1055,6 +1095,41 @@
 				renderActive();
 				renderDone();
 				spinBtn.disabled = state.active.length === 0;
+				requestAnimationFrame(fitList);
+			}
+
+			// Shrink the task type until the whole list fits on screen, then
+			// fall back to scrolling when even the minimum is too much.
+			function fitList() {
+				if (boardView.hidden) return;
+				const count = state.active.length;
+				if (!count) {
+					list.style.removeProperty("--task-size");
+					return;
+				}
+				const available = listContainer.clientHeight - 8;
+				if (available <= 0) return;
+
+				let size = Math.floor((available / count - 10) / 1.2);
+				size = Math.max(13, Math.min(24, size));
+				list.style.setProperty("--task-size", size + "px");
+
+				let guard = 0;
+				while (
+					size > 13 &&
+					listContainer.scrollHeight > listContainer.clientHeight + 1 &&
+					guard < 16
+				) {
+					size -= 1;
+					list.style.setProperty("--task-size", size + "px");
+					guard += 1;
+				}
+			}
+
+			window.addEventListener("resize", () => requestAnimationFrame(fitList));
+			window.addEventListener("orientationchange", () => setTimeout(fitList, 150));
+			if (window.visualViewport) {
+				window.visualViewport.addEventListener("resize", () => requestAnimationFrame(fitList));
 			}
 
 			function renderActive() {
