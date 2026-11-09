@@ -19,7 +19,9 @@
 			body {
 				background: #0f0f0f;
 				font-family: "Fira Code", monospace;
-				min-height: 100dvh;
+				height: 100vh;
+				height: 100dvh;
+				min-height: 0;
 				overflow: hidden;
 				display: flex;
 				flex-direction: column;
@@ -124,6 +126,7 @@
 				display: flex;
 				flex-direction: column;
 				min-height: 0;
+				overflow: hidden;
 			}
 
 			#topbar {
@@ -314,24 +317,6 @@
 				color: #45475a;
 			}
 
-			.task-add {
-				min-width: 44px;
-				min-height: 44px;
-				background: transparent;
-				border: 1px solid #2a2a2a;
-				border-radius: 0.4rem;
-				color: #a6e3a1;
-				font: inherit;
-				font-size: 1.3rem;
-				line-height: 1;
-				cursor: pointer;
-				flex-shrink: 0;
-			}
-
-			.task-add:hover {
-				border-color: #a6e3a1;
-			}
-
 			#list-container {
 				flex: 1;
 				min-height: 0;
@@ -359,12 +344,21 @@
 
 			#list li,
 			#done-list li {
+				position: relative;
 				display: flex;
 				align-items: center;
 				justify-content: center;
 				gap: 0.5rem;
-				padding: 0.3rem 0;
+				padding: 0.3rem 1.6rem;
 				text-align: center;
+			}
+
+			#list li .icon-btn,
+			#done-list li .icon-btn {
+				position: absolute;
+				right: 0;
+				top: 50%;
+				transform: translateY(-50%);
 			}
 
 			#list li span,
@@ -383,9 +377,9 @@
 				color: #585b70;
 				font-size: 0.9em;
 				cursor: pointer;
-				padding: 0.2rem 0.4rem;
-				min-width: 36px;
-				min-height: 36px;
+				padding: 0.15rem 0.35rem;
+				min-width: 28px;
+				min-height: 28px;
 				flex-shrink: 0;
 			}
 
@@ -697,7 +691,6 @@
 						autocomplete="off"
 						maxlength="500"
 					/>
-					<button id="task-add" class="task-add" type="submit" aria-label="add task">+</button>
 				</form>
 
 				<div id="list-container">
@@ -1111,12 +1104,12 @@
 				if (available <= 0) return;
 
 				let size = Math.floor((available / count - 10) / 1.2);
-				size = Math.max(13, Math.min(24, size));
+				size = Math.max(12, Math.min(24, size));
 				list.style.setProperty("--task-size", size + "px");
 
 				let guard = 0;
 				while (
-					size > 13 &&
+					size > 12 &&
 					listContainer.scrollHeight > listContainer.clientHeight + 1 &&
 					guard < 16
 				) {
