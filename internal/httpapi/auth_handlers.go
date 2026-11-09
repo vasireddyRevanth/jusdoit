@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"jusdoit/internal/auth"
@@ -25,6 +26,9 @@ type credentials struct {
 func validateCredentials(c credentials) string {
 	if !usernamePattern.MatchString(c.Username) {
 		return "username must be 3-32 characters: letters, numbers, _ or -"
+	}
+	if strings.HasPrefix(strings.ToLower(c.Username), "guest-") {
+		return "that username is reserved"
 	}
 	if len(c.Password) < 8 {
 		return "password must be at least 8 characters"

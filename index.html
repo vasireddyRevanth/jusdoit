@@ -512,17 +512,20 @@
 				text-transform: uppercase;
 			}
 
-			#invite-result {
+			#invite-result,
+			#guest-result {
 				display: flex;
 				gap: 0.4rem;
 			}
 
-			#invite-result .field {
+			#invite-result .field,
+			#guest-result .field {
 				font-size: 0.75rem;
 				padding: 0.5rem;
 			}
 
-			#invite-url {
+			#invite-url,
+			#guest-url {
 				flex: 1;
 			}
 
@@ -721,6 +724,20 @@
 							<button id="invite-copy" class="small-btn" type="button">copy</button>
 						</div>
 						<ul id="invite-list"></ul>
+
+						<p class="member-section-label">guest link (no account)</p>
+						<form id="guest-form" class="member-form">
+							<select id="guest-role">
+								<option value="editor">editor</option>
+								<option value="viewer">viewer</option>
+							</select>
+							<button class="primary" type="submit">create guest link</button>
+						</form>
+						<div id="guest-result" hidden>
+							<input id="guest-url" class="field" type="text" readonly />
+							<button id="guest-copy" class="small-btn" type="button">copy</button>
+						</div>
+						<ul id="guest-link-list"></ul>
 					</div>
 				</div>
 			</div>
@@ -782,6 +799,12 @@
 			const inviteURL = $("invite-url");
 			const inviteCopy = $("invite-copy");
 			const inviteList = $("invite-list");
+			const guestForm = $("guest-form");
+			const guestRoleSelect = $("guest-role");
+			const guestResult = $("guest-result");
+			const guestURL = $("guest-url");
+			const guestCopy = $("guest-copy");
+			const guestLinkList = $("guest-link-list");
 
 			const isTouch = matchMedia("(hover: none) and (pointer: coarse)").matches;
 			const state = {
@@ -792,6 +815,7 @@
 				done: [],
 				members: [],
 				invites: [],
+				guestLinks: [],
 			};
 			let authMode = "login";
 			let spinning = false;
@@ -866,6 +890,8 @@
 				const hash = location.hash || "#/";
 				if (hash.startsWith("#/join/")) {
 					acceptInvite(hash.slice("#/join/".length));
+				} else if (hash.startsWith("#/g/")) {
+					acceptGuest(hash.slice("#/g/".length));
 				} else if (hash.startsWith("#/b/")) {
 					openBoard(hash.slice(4));
 				} else {
@@ -1221,6 +1247,7 @@
 				if (!state.board) return;
 				ownerTools.hidden = !isOwner();
 				inviteResult.hidden = true;
+				guestResult.hidden = true;
 				membersModal.hidden = false;
 				await loadMembers();
 			}
@@ -1233,12 +1260,17 @@
 				if (!state.board) return;
 				try {
 					const requests = [api(`/api/boards/${state.board.id}/members`)];
-					if (isOwner()) requests.push(api(`/api/boards/${state.board.id}/invites`));
-					const [memberData, inviteData] = await Promise.all(requests);
+					if (isOwner()) {
+						requests.push(api(`/api/boards/${state.board.id}/invites`));
+						requests.push(api(`/api/boards/${state.board.id}/guest-links`));
+					}
+					const [memberData, inviteData, guestData] = await Promise.all(requests);
 					state.members = memberData.members || [];
 					state.invites = (inviteData && inviteData.invites) || [];
+					state.guestLinks = (guestData && guestData.links) || [];
 					renderMembers();
 					renderInvites();
+					renderGuestLinks();
 				} catch (err) {
 					handleError(err);
 				}
@@ -1309,6 +1341,27 @@
 				}
 			}
 
+			function renderGuestLinks() {
+				guestLinkList.innerHTML = "";
+				for (const link of state.guestLinks) {
+					const li = document.createElement("li");
+					li.className = "invite-row";
+
+					const label = document.createElement("span");
+					const created = new Date(link.created_at);
+					label.textContent = `${link.role} · created ${created.toLocaleDateString()}`;
+
+					const revoke = document.createElement("button");
+					revoke.type = "button";
+					revoke.className = "small-btn muted";
+					revoke.textContent = "revoke";
+					revoke.addEventListener("click", () => revokeGuestLink(link.id));
+
+					li.append(label, revoke);
+					guestLinkList.appendChild(li);
+				}
+			}
+
 			async function setMemberRole(userId, role) {
 				try {
 					await api(`/api/boards/${state.board.id}/members/${userId}`, {
@@ -1335,6 +1388,16 @@
 			async function revokeInvite(inviteId) {
 				try {
 					await api(`/api/boards/${state.board.id}/invites/${inviteId}`, { method: "DELETE" });
+					await loadMembers();
+				} catch (err) {
+					handleError(err);
+				}
+			}
+
+			async function revokeGuestLink(linkId) {
+				if (!confirm("revoke this guest link? guests using it will be signed out.")) return;
+				try {
+					await api(`/api/boards/${state.board.id}/guest-links/${linkId}`, { method: "DELETE" });
 					await loadMembers();
 				} catch (err) {
 					handleError(err);
@@ -1382,6 +1445,33 @@
 				}
 			});
 
+			guestForm.addEventListener("submit", async (e) => {
+				e.preventDefault();
+				try {
+					const data = await api(`/api/boards/${state.board.id}/guest-links`, {
+						method: "POST",
+						body: JSON.stringify({ role: guestRoleSelect.value }),
+					});
+					guestURL.value = `${location.origin}/g/${data.token}`;
+					guestResult.hidden = false;
+					guestURL.select();
+					await loadMembers();
+				} catch (err) {
+					handleError(err);
+				}
+			});
+
+			guestCopy.addEventListener("click", async () => {
+				try {
+					await navigator.clipboard.writeText(guestURL.value);
+					toast("link copied");
+				} catch {
+					guestURL.select();
+					document.execCommand("copy");
+					toast("link copied");
+				}
+			});
+
 			inviteCopy.addEventListener("click", async () => {
 				try {
 					await navigator.clipboard.writeText(inviteURL.value);
@@ -1411,6 +1501,24 @@
 					sessionStorage.removeItem("pending-join");
 					if (err.status === 404) {
 						toast("invite is invalid or expired");
+						navigate("#/");
+						return;
+					}
+					handleError(err);
+				}
+			}
+
+			// ── Join as a guest ──
+			async function acceptGuest(token) {
+				try {
+					const data = await api(`/api/guest/${encodeURIComponent(token)}`, { method: "POST" });
+					sessionStorage.removeItem("pending-guest");
+					toast(data.guest ? `joined as guest ${data.role}` : `joined as ${data.role}`);
+					navigate(`#/b/${data.board_id}`);
+				} catch (err) {
+					sessionStorage.removeItem("pending-guest");
+					if (err.status === 404) {
+						toast("guest link is invalid");
 						navigate("#/");
 						return;
 					}
@@ -1567,17 +1675,26 @@
 				});
 			}
 
-			// A shared /join/<token> link is served by the SPA fallback; keep the
-			// token and return the address bar to a clean hash route.
+			// Shared links are served by the SPA fallback; keep the token and
+			// return the address bar to a clean hash route.
 			(function () {
-				const match = location.pathname.match(/^\/join\/([^/]+)\/?$/);
-				if (!match) return;
-				sessionStorage.setItem("pending-join", decodeURIComponent(match[1]));
-				history.replaceState(null, "", "/");
+				let match = location.pathname.match(/^\/join\/([^/]+)\/?$/);
+				if (match) {
+					sessionStorage.setItem("pending-join", decodeURIComponent(match[1]));
+					history.replaceState(null, "", "/");
+					return;
+				}
+				match = location.pathname.match(/^\/g\/([^/]+)\/?$/);
+				if (match) {
+					sessionStorage.setItem("pending-guest", decodeURIComponent(match[1]));
+					history.replaceState(null, "", "/");
+				}
 			})();
 
 			// ── Bootstrap ──
 			(async () => {
+				const guestToken = sessionStorage.getItem("pending-guest");
+				if (guestToken) await acceptGuest(guestToken);
 				try {
 					const data = await api("/api/auth/me");
 					showApp(data.user);

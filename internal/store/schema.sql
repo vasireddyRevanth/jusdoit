@@ -55,3 +55,21 @@ CREATE TABLE IF NOT EXISTS invites (
     created_at  TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_invites_board ON invites(board_id);
+
+-- Shared links that let people join a board without creating an account.
+CREATE TABLE IF NOT EXISTS guest_links (
+    id         TEXT PRIMARY KEY,
+    board_id   TEXT NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    role       TEXT NOT NULL CHECK (role IN ('editor', 'viewer')),
+    created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_guest_links_board ON guest_links(board_id);
+
+-- Guests created through a link, so revoking it can kick those sessions.
+CREATE TABLE IF NOT EXISTS guest_link_joins (
+    link_id TEXT NOT NULL REFERENCES guest_links(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (link_id, user_id)
+);

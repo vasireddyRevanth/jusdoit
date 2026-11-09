@@ -45,6 +45,11 @@ func main() {
 			} else if n > 0 {
 				slog.Info("pruned sessions", "count", n)
 			}
+			if n, err := st.DeleteOrphanGuests(ctx); err != nil {
+				slog.Error("prune guests", "err", err)
+			} else if n > 0 {
+				slog.Info("pruned guests", "count", n)
+			}
 		}
 	}()
 

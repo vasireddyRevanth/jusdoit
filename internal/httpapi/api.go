@@ -20,6 +20,7 @@ type Server struct {
 
 	loginLimiter    *rateLimiter
 	registerLimiter *rateLimiter
+	guestLimiter    *rateLimiter
 }
 
 // New builds a Server with rate limiters configured.
@@ -30,6 +31,7 @@ func New(st *store.Store, version string, secureCookies bool) *Server {
 		SecureCookies:   secureCookies,
 		loginLimiter:    newRateLimiter(10, time.Minute),
 		registerLimiter: newRateLimiter(5, time.Hour),
+		guestLimiter:    newRateLimiter(20, time.Hour),
 	}
 }
 
@@ -62,6 +64,13 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/boards/{id}/invites", s.requireBoard(store.RoleOwner, s.handleListInvites))
 	mux.HandleFunc("POST /api/boards/{id}/invites", s.requireBoard(store.RoleOwner, s.handleCreateInvite))
 	mux.HandleFunc("DELETE /api/boards/{id}/invites/{inviteId}", s.requireBoard(store.RoleOwner, s.handleDeleteInvite))
+
+	mux.HandleFunc("GET /api/boards/{id}/guest-links", s.requireBoard(store.RoleOwner, s.handleListGuestLinks))
+	mux.HandleFunc("POST /api/boards/{id}/guest-links", s.requireBoard(store.RoleOwner, s.handleCreateGuestLink))
+	mux.HandleFunc("DELETE /api/boards/{id}/guest-links/{linkId}", s.requireBoard(store.RoleOwner, s.handleDeleteGuestLink))
+
+	mux.HandleFunc("GET /api/guest/{token}", s.handleGuestPreview)
+	mux.HandleFunc("POST /api/guest/{token}", s.handleGuestJoin)
 
 	mux.HandleFunc("GET /api/invites/{token}", s.requireAuth(s.handleInvitePreview))
 	mux.HandleFunc("POST /api/invites/{token}/accept", s.requireAuth(s.handleAcceptInvite))
